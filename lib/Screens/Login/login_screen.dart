@@ -1,0 +1,222 @@
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../providers/loginProvider.dart';
+import '../../routing/app_pages.dart';
+
+class LoginScreen extends StatefulWidget {
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+}
+class _LoginScreenState extends State<LoginScreen> {
+  bool _obscurePassword = true;
+  final TextEditingController _userIdController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  @override
+  Widget build(BuildContext context) {
+    final loginProvider = Provider.of<ProviderScreen>(context);
+    final size = MediaQuery.of(context).size;
+    final height = size.height;
+    final width = size.width;
+
+    // Scaling functions
+    double fontScale(double value) => value * width / 375;
+    double heightScale(double value) => value * height / 812;
+    double widthScale(double value) => value * width / 375;
+
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset('assets/welcome.png', fit: BoxFit.cover,
+              height: height, width: width,
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: heightScale(200)),
+              Padding(
+                padding: EdgeInsets.only(left: widthScale(30)),
+                child: Text("Welcome\nBack",
+                  style: TextStyle(fontSize: fontScale(34), fontWeight: FontWeight.bold,
+                    color: Colors.white, letterSpacing: 0.1,),
+                ),
+              ),
+              SizedBox(height: heightScale(20)),
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(widthScale(30)),
+                      topRight: Radius.circular(widthScale(30)),
+                    ),),
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: EdgeInsets.all(widthScale(30)),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(height: heightScale(5)),
+                            Text("Login", style: TextStyle(color: Color(0xFFE95168), fontSize: fontScale(20), fontWeight: FontWeight.bold,
+                              ),),
+                            SizedBox(height: heightScale(10)),
+                            TextFormField(
+                              controller: _userIdController,
+                              decoration: InputDecoration(
+                                focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey),),
+                                enabledBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey), // unfocused border
+                                ),
+                                labelStyle: TextStyle(color: Colors.grey, fontSize: fontScale(15),),
+                                labelText: "User ID",
+                                border: UnderlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return "Please enter User ID";
+                                }
+                                return null;
+                              },
+                            ),
+                            SizedBox(height: heightScale(10)),
+                            TextFormField(
+                              controller: _passwordController,
+                              obscureText: _obscurePassword,
+                              decoration: InputDecoration(
+                                labelText: "Password",
+                                labelStyle: TextStyle(color: Colors.grey, fontSize: fontScale(15),),
+                                focusedBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                enabledBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey), // unfocused border
+                                ),
+                                border: UnderlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                suffixIcon: IconButton(
+                                  icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: Color(0xFFE95168),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return "Please enter Password";
+                                }
+                                return null;
+                              },
+                            ),
+                            SizedBox(height: heightScale(30)),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: Text("Back",
+                                    style: TextStyle(
+                                      color: Color(0xFF018BD3),
+                                      fontSize: fontScale(17),
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  height: heightScale(50), width: 130,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Color(0xFFE95168),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widthScale(25)),
+                                      ),),
+                                    onPressed: () async {
+                                      if (_formKey.currentState!.validate()) {
+                                        String userId = _userIdController.text.trim();
+                                        String password = _passwordController.text.trim();
+                                        var res = await loginProvider.loginUser(userId, password);
+                                        if (res['Status'] == 'True') {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text("✅ Login Successful")),
+                                          );
+                                          context.pushNamed(AppPages.mpinscreen);
+                                        } else {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text(res['Message'] ?? "Login Failed"),
+                                            ),);
+                                        }
+                                      }
+                                    },
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Center(
+                                          child: Text("Sign In", style: TextStyle(
+                                              fontSize: fontScale(18), fontWeight: FontWeight.bold,
+                                              letterSpacing: 1.2, color: Colors.white,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),),
+                                        SizedBox(width: widthScale(5)),
+                                        Image.asset("assets/send.png", height: heightScale(19 ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: heightScale(30)),
+                            Divider(thickness: 1.2, color: Colors.grey,),
+                            SizedBox(height: heightScale(10)),
+                            Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextButton(
+                                    onPressed: () {},
+                                    child: Text("Did you forgot your Password?",
+                                      style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold,
+                                        fontSize: fontScale(16), letterSpacing: 0,
+                                      ),
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () {},
+                                    child: Text("Tap here for reset",
+                                      style: TextStyle(
+                                        color: Color(0xFF018BD3), fontWeight: FontWeight.w700, fontSize: fontScale(16),
+                                        letterSpacing: 0,),),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
