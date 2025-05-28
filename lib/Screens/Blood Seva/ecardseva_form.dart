@@ -72,7 +72,7 @@ class _BloodSevaFormScreenState extends State<BloodSevaFormScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.grey, width: 2), // grey border
+        borderSide: const BorderSide(color: Colors.grey, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -91,226 +91,236 @@ class _BloodSevaFormScreenState extends State<BloodSevaFormScreen> {
         foregroundColor: pink,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Form(
-              key: _formKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Name
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: inputDecoration.copyWith(
-                      labelText: 'Name',
-                      prefixIcon: Icon(Icons.person, color: pink),
-                      hintText: 'Enter your name',
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
                     ),
-                    validator: (value) => value!.isEmpty ? 'Enter name' : null,
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Mobile Number
-                  TextFormField(
-                    controller: _mobileController,
-                    keyboardType: TextInputType.phone,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: inputDecoration.copyWith(
-                      labelText: 'Mobile Number',
-                      prefixIcon: Icon(Icons.phone, color: pink),
-                      hintText: 'Enter mobile number',
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) return 'Enter mobile number';
-                      if (value.length < 10) return 'Enter valid mobile number';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Age
-                  TextFormField(
-                    controller: _ageController,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: inputDecoration.copyWith(
-                      labelText: 'Age',
-                      prefixIcon: Icon(Icons.cake, color: pink),
-                      hintText: 'Enter your age',
-                    ),
-                    validator: (value) => value!.isEmpty ? 'Enter age' : null,
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Gender Dropdown
-                  DropdownButtonFormField<String>(
-                    decoration: inputDecoration.copyWith(
-                      labelText: 'Gender',
-                      prefixIcon: Icon(Icons.transgender, color: pink),
-                    ),
-                    value: _selectedGender,
-                    items: _genders
-                        .map((gender) => DropdownMenuItem(
-                      value: gender,
-                      child: Text(gender, style: const TextStyle(fontWeight: FontWeight.normal)),
-                    ))
-                        .toList(),
-                    onChanged: (value) => setState(() => _selectedGender = value),
-                    validator: (value) => value == null ? 'Select gender' : null,
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Blood Type Dropdown
-                  DropdownButtonFormField<String>(
-                    decoration: inputDecoration.copyWith(
-                      labelText: 'Blood Type',
-                      prefixIcon: Icon(Icons.bloodtype, color: pink),
-                    ),
-                    value: _selectedBloodType,
-                    items: _bloodTypes
-                        .map((type) => DropdownMenuItem(
-                      value: type,
-                      child: Text(type, style: const TextStyle(fontWeight: FontWeight.normal)),
-                    ))
-                        .toList(),
-                    onChanged: (value) => setState(() => _selectedBloodType = value),
-                    validator: (value) => value == null ? 'Select blood type' : null,
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Hospital Name
-                  TextFormField(
-                    controller: _hospitalController,
-                    decoration: inputDecoration.copyWith(
-                      labelText: 'Hospital Name',
-                      prefixIcon: Icon(Icons.local_hospital, color: pink),
-                      hintText: 'Enter hospital name',
-                    ),
-                    validator: (value) => value!.isEmpty ? 'Enter hospital name' : null,
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Current Address
-                  TextFormField(
-                    controller: _currentAddressController,
-                    maxLines: 3,
-                    decoration: inputDecoration.copyWith(
-                      labelText: 'Hospital Address',
-
-                      hintText: 'Enter your address',
-                      suffixIcon: Tooltip(
-                        message: 'Open in Google Maps',
-                        child: IconButton(
-                          icon: Icon(Icons.location_pin, color: Colors.redAccent),
-                          onPressed: _openInGoogleMaps,
-                        ),
-                      ),
-                    ),
-                    validator: (value) => value!.isEmpty ? 'Enter current address' : null,
-                  ),
-                  const SizedBox(height: 20),
-
-                  Text(
-                    "Requestion Letter (Upload Photo)",
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: _pickFile,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
+                    child: Form(
+                      key: _formKey,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Icon(Icons.attach_file, color: Colors.black54),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              _selectedFile != null
-                                  ? _selectedFile!.path.split('/').last
-                                  : 'Upload File',
-                              style: TextStyle(
-                                color: _selectedFile != null ? Colors.black87 : Colors.grey,
-                                fontWeight: FontWeight.w500,
+                          // Name
+                          TextFormField(
+                            controller: _nameController,
+                            decoration: inputDecoration.copyWith(
+                              labelText: 'Name',
+                              prefixIcon: Icon(Icons.person, color: pink),
+                              hintText: 'Enter your name',
+                            ),
+                            validator: (value) => value!.isEmpty ? 'Enter name' : null,
+                          ),
+                          const SizedBox(height: 15),
+
+                          // Mobile Number
+                          TextFormField(
+                            controller: _mobileController,
+                            keyboardType: TextInputType.phone,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            decoration: inputDecoration.copyWith(
+                              labelText: 'Mobile Number',
+                              prefixIcon: Icon(Icons.phone, color: pink),
+                              hintText: 'Enter mobile number',
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) return 'Enter mobile number';
+                              if (value.length < 10) return 'Enter valid mobile number';
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 15),
+
+                          // Age
+                          TextFormField(
+                            controller: _ageController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            decoration: inputDecoration.copyWith(
+                              labelText: 'Age',
+                              prefixIcon: Icon(Icons.cake, color: pink),
+                              hintText: 'Enter your age',
+                            ),
+                            validator: (value) => value!.isEmpty ? 'Enter age' : null,
+                          ),
+                          const SizedBox(height: 15),
+
+                          // Gender Dropdown
+                          DropdownButtonFormField<String>(
+                            decoration: inputDecoration.copyWith(
+                              labelText: 'Gender',
+                              prefixIcon: Icon(Icons.transgender, color: pink),
+                            ),
+                            value: _selectedGender,
+                            items: _genders
+                                .map((gender) => DropdownMenuItem(
+                              value: gender,
+                              child: Text(gender),
+                            ))
+                                .toList(),
+                            onChanged: (value) => setState(() => _selectedGender = value),
+                            validator: (value) => value == null ? 'Select gender' : null,
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Blood Type Dropdown
+                          DropdownButtonFormField<String>(
+                            decoration: inputDecoration.copyWith(
+                              labelText: 'Blood Type',
+                              prefixIcon: Icon(Icons.bloodtype, color: pink),
+                            ),
+                            value: _selectedBloodType,
+                            items: _bloodTypes
+                                .map((type) => DropdownMenuItem(
+                              value: type,
+                              child: Text(type),
+                            ))
+                                .toList(),
+                            onChanged: (value) => setState(() => _selectedBloodType = value),
+                            validator: (value) => value == null ? 'Select blood type' : null,
+                          ),
+                          const SizedBox(height: 15),
+
+                          // Hospital Name
+                          TextFormField(
+                            controller: _hospitalController,
+                            decoration: inputDecoration.copyWith(
+                              labelText: 'Hospital Name',
+                              prefixIcon: Icon(Icons.local_hospital, color: pink),
+                              hintText: 'Enter hospital name',
+                            ),
+                            validator: (value) => value!.isEmpty ? 'Enter hospital name' : null,
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Current Address
+                          TextFormField(
+                            controller: _currentAddressController,
+                            maxLines: 3,
+                            decoration: inputDecoration.copyWith(
+                              labelText: 'Hospital Address',
+                              hintText: 'Enter your address',
+                              suffixIcon: Tooltip(
+                                message: 'Open in Google Maps',
+                                child: IconButton(
+                                  icon: const Icon(Icons.location_pin, color: Colors.redAccent),
+                                  onPressed: _openInGoogleMaps,
+                                ),
                               ),
-                              overflow: TextOverflow.ellipsis,
+                            ),
+                            validator: (value) => value!.isEmpty ? 'Enter current address' : null,
+                          ),
+                          const SizedBox(height: 15),
+
+                          Text(
+                            "Request Letter (Upload Photo)",
+                            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                          ),
+                          const SizedBox(height: 8),
+                          GestureDetector(
+                            onTap: _pickFile,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.attach_file, color: Colors.black54),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      _selectedFile != null
+                                          ? _selectedFile!.path.split('/').last
+                                          : 'Upload File',
+                                      style: TextStyle(
+                                        color: _selectedFile != null ? Colors.black87 : Colors.grey,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 30),
+
+                          // Submit Button
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              backgroundColor: Colors.transparent,
+                              elevation: 1,
+                              shadowColor: purple.withOpacity(0.5),
+                            ),
+                            onPressed: () async {
+                              if (_formKey.currentState!.validate()) {
+                                bool confirm = await showDialog(
+                                  context: context,
+                                  builder: (_) => AlertDialog(
+                                    title: const Text("Confirm Submission"),
+                                    content: const Text("Are you sure you want to submit this form?"),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context, false),
+                                        child: const Text("Cancel"),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () => Navigator.pop(context, true),
+                                        child: const Text("Submit"),
+                                      ),
+                                    ],
+                                  ),
+                                );
+
+                                if (confirm == true) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Form Submitted'), backgroundColor: pink),
+                                  );
+                                }
+                              }
+                            },
+                            child: Ink(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(colors: [pink, purple]),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Container(
+                                alignment: Alignment.center,
+                                constraints:  BoxConstraints(minHeight: 50),
+                                child:  Text(
+                                  "Submit",
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                                ),
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-
-                  const SizedBox(height: 30),
-                  // Submit Button
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      backgroundColor: Colors.transparent,
-                      elevation: 1,
-                      shadowColor: purple.withOpacity(0.5),
-                    ),
-                    onPressed: () async {
-                      if (_formKey.currentState!.validate()) {
-                        bool confirm = await showDialog(
-                          context: context,
-                          builder: (_) => AlertDialog(
-                            title: const Text("Confirm Submission"),
-                            content: const Text("Are you sure you want to submit this form?"),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: const Text("Cancel"),
-                              ),
-                              ElevatedButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                child: const Text("Submit"),
-                              ),
-                            ],
-                          ),
-                        );
-
-                        if (confirm == true) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Form Submitted'), backgroundColor: pink),
-                          );
-                        }
-                      }
-                    },
-                    child: Ink(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(colors: [pink, purple]),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Container(
-                        alignment: Alignment.center,
-                        constraints: const BoxConstraints(minHeight: 48),
-                        child: const Text(
-                          "Submit",
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
   }
 }
+
+

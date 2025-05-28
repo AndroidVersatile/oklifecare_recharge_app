@@ -30,13 +30,6 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _pincodeController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(() {
-      Provider.of<ProviderScreen>(context, listen: false).fetchCountries();
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -287,3 +280,4 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 }
+

@@ -183,18 +183,7 @@ class _BlooddonateFormScreenState extends State<BlooddonateFormScreen> {
                     onChanged: (value) => setState(() => _selectedBloodType = value),
                     validator: (value) => value == null ? 'Select blood type' : null,
                    ),
-                  // const SizedBox(height: 20),
-                  //
-                  // // Hospital Name
-                  // TextFormField(
-                  //   controller: _hospitalController,
-                  //   decoration: inputDecoration.copyWith(
-                  //     labelText: 'Hospital Name',
-                  //     prefixIcon: Icon(Icons.local_hospital, color: pink),
-                  //     hintText: 'Enter hospital name',
-                  //   ),
-                  //   validator: (value) => value!.isEmpty ? 'Enter hospital name' : null,
-                  // ),
+
                   const SizedBox(height: 20),
 
                   // Current Address
