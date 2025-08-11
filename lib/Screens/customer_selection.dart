@@ -13,11 +13,9 @@ class CustomerSelectionScreen extends StatefulWidget {
 class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
   @override
   Widget build(BuildContext context) {
-    // MediaQuery values
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
     final textScale = MediaQuery.of(context).textScaleFactor;
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -31,8 +29,8 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                 SizedBox(height: height * 0.17), // Responsive top spacing
                 Center(
                   child: Image.asset(
-                    'assets/logos.png',
-                    height: height * 0.2, // Responsive image height
+                    'assets/logotype.png',
+                    height: height * 0.2,
                   ),
                 ),
                 SizedBox(height: height * 0.05), // Spacer after image
@@ -40,56 +38,39 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                 RichText(
                   textAlign: TextAlign.start,
                   text: TextSpan(
-                    style: TextStyle(fontSize: width * 0.07), // Responsive font size
+                    style: TextStyle(fontSize: width * 0.06), // Responsive font size
                     children: [
                       TextSpan(
-                        text: "Welcome!\n",
+                        text: "Welcome Login for a Benefits.",
                         style: TextStyle(
-                          color: const Color(0xFFE95168),
+                          color: const Color(0xFF4CAF50),
+
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.2,
                         ),
                       ),
-                      const TextSpan(
-                        text: "Registration\nfor a ",
-                        style: TextStyle(
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.2,
-                          height: 1.2,
-                        ),
-                      ),
-                      const TextSpan(
-                        text: "Benefits",
-                        style: TextStyle(
-                          color: Color(0xFF018BD3),
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.2,
-                          height: 1.2,
-                        ),
-                      ),
+
                     ],
                   ),
                 ),
 
                 SizedBox(height: height * 0.08),
-
-                // Create Account Button
                 SizedBox(
                   height: height * 0.07,
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      context.pushNamed(AppPages.signscreen);
+                      context.pushNamed(AppPages.loginmemeber);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFE95168),
+                      backgroundColor: Color(0xFFD81B5B),
+
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(40),
                       ),
                     ),
                     child: Text(
-                      'Create Account',
+                      'Member Panel',
                       style: TextStyle(
                         fontSize: width * 0.05,
                         color: Colors.white,
@@ -103,7 +84,6 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                  Divider(color: Colors.black),
                 SizedBox(height: height * 0.015),
 
-                // I have an account Button
                 SizedBox(
                   height: height * 0.07,
                   width: double.infinity,
@@ -112,13 +92,13 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                       context.pushNamed(AppPages.login);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF018BD3),
+                      backgroundColor: Color(0xFF018CCF),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(40),
                       ),
                     ),
                     child: Text(
-                      'I have an account',
+                      'Utility Recharge Panel',
                       style: TextStyle(
                         fontSize: width * 0.05,
                         color: Colors.white,

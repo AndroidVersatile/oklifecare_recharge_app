@@ -1,6 +1,6 @@
 
 import 'dart:convert';
-
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -8,11 +8,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../providers/loginProvider.dart';
 import '../../routing/app_pages.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginMemberPanelScreen extends StatefulWidget {
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  _LoginMemberPanelScreenState createState() => _LoginMemberPanelScreenState();
 }
-class _LoginScreenState extends State<LoginScreen> {
+
+class _LoginMemberPanelScreenState extends State<LoginMemberPanelScreen> {
   bool _obscurePassword = true;
   final TextEditingController _userIdController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -22,28 +23,52 @@ class _LoginScreenState extends State<LoginScreen> {
     return base64.encode(utf8.encode(value));
   }
 
+
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       String userId = _userIdController.text.trim();
       String password = _passwordController.text.trim();
 
-      // Encode
-      String encodedUserId = encodeBase64(userId);
-      String encodedPassword = encodeBase64(password);
+      try {
+        final response = await http.get(
+          Uri.parse(
+            "https://olcweb.net/oksekharidoAPI/api/Home/getMemberDashboardLink"
+                "?Username=$userId&Password=$password",
+          ),
+          headers: {'Content-Type': 'application/json'},
+        );
 
-      // Final URL
-      String url =
-          "https://oklifecare.com/Dashboard/App_Login.aspx?Auth=$encodedUserId&AuthBy=$encodedPassword";
 
-      print("Login URL: $url"); // ✅ Print URL here
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
 
-      // Save in SharedPreferences
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString("user_id", userId);
-      await prefs.setString("password", password);
+          if (data['Success'] == true && data['data'] != null) {
+            final String rawUrl = data['data'];
+            final String cleanUrl = rawUrl.replaceAll('"', '');
 
-      // Navigate to WebView screen
-      context.pushNamed(AppPages.CustomBottomNavBar);
+            // ✅ Save credentials
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString("user_id", userId);
+            await prefs.setString("password", password);
+
+            // ✅ Navigate to WebView screen
+            context.pushNamed(AppPages.webviewScreen, extra: cleanUrl);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(data['StatusMessage'] ?? "Login failed")),
+            );
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error ${response.statusCode}: ${response.reasonPhrase}")),
+          );
+        }
+      } catch (e) {
+        print("Login error: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Login failed. Please try again.")),
+        );
+      }
     }
   }
 
@@ -100,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           children: [
                             SizedBox(height: heightScale(5)),
                             Text("Login", style: TextStyle(color: Color(0xFFD81B5B), fontSize: fontScale(20), fontWeight: FontWeight.bold,
-                              ),),
+                            ),),
                             SizedBox(height: heightScale(10)),
                             TextFormField(
                               controller: _userIdController,
@@ -202,9 +227,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                       children: [
                                         Center(
                                           child: Text("Sign In", style: TextStyle(
-                                              fontSize: fontScale(18), fontWeight: FontWeight.bold,
-                                              letterSpacing: 1.2, color: Colors.white,
-                                            ),
+                                            fontSize: fontScale(18), fontWeight: FontWeight.bold,
+                                            letterSpacing: 1.2, color: Colors.white,
+                                          ),
                                             textAlign: TextAlign.center,
                                           ),),
                                         SizedBox(width: widthScale(5)),

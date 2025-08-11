@@ -51,26 +51,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           children: [
             // Background splash image
             Image.asset(
-              "assets/splash.png",
+              "assets/splashh.png",
               fit: BoxFit.cover,
               width: double.infinity,
               height: double.infinity,
             ),
 
-            // Center animated logo
-            Center(
-              child: FadeTransition(
-                opacity: _animation,
-                child: ScaleTransition(
-                  scale: _animation,
-                  child: Image.asset(
-                    "assets/logo.png",
-                    height: 150,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),

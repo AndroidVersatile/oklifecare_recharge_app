@@ -3,6 +3,7 @@ class AppPages {
   static const String splashPath = '/';
   static const String customerselection = '/customerselection';
   static const String login = '/login';
+  static const String loginmemeber = '/loginmemeber';
   static const String mpinscreen = '/mpinscreen';
   static const String signscreen = '/signscreen';
   static const String CustomBottomNavBar = '/CustomBottomNavBar';
@@ -11,6 +12,7 @@ class AppPages {
   static const String receivemoneyscreen = '/receivemoneyscreen';
   static const String homescreen = '/homescreen';
   static const String HistoryScreen = '/HistoryScreen';
+  static const String webviewScreen = '/webviewScreen';
   static const String walletStatement = '/walletstatementscreen';
   static const String changepasswordscreen = '/changepasswordscreen';
   static const String kycscreen = '/kycscreen';

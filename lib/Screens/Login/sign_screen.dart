@@ -46,7 +46,7 @@ class _SignupScreenState extends State<SignupScreen> {
         children: [
           Positioned.fill(
             child: Image.asset(
-              'assets/welcome.png',
+              'assets/loginn.png',
               fit: BoxFit.cover,
             ),
           ),
@@ -94,7 +94,7 @@ class _SignupScreenState extends State<SignupScreen> {
         Text(
           'Step ${_currentStep + 1} of 3',
           style: TextStyle(
-            color: Color(0xFFE95168),
+            color: Color(0xFFD81B5B),
             fontSize: fontScale(20),
             fontWeight: FontWeight.bold,
           ),
@@ -124,7 +124,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       });
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFE95168),
+                      backgroundColor: Color(0xFFD81B5B),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
@@ -182,7 +182,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 height: heightScale(50),
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFE95168),
+                    backgroundColor: Color(0xFFD81B5B),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),

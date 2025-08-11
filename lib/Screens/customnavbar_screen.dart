@@ -75,7 +75,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
-                  colors: [Color(0xFFE91E63), Color(0xFF9C27B0)],
+                  colors: [Color(0xFFE91E63), Color(0xFFE91E63)],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),

@@ -76,7 +76,7 @@ class _MpinScreenState extends State<MpinScreen> {
         children: [
           Positioned.fill(
             child: Image.asset(
-              'assets/welcome.png',
+              'assets/loginn.png',
               fit: BoxFit.cover,
               height: height,
               width: width,

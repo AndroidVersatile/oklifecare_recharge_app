@@ -1,6 +1,15 @@
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:permission_handler/permission_handler.dart';
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:uonly_app/Screens/Transction%20history/transaction_detailscreen.dart';
 import '../../models/wallet_statement_model.dart';
@@ -16,6 +25,7 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<WalletStatementModel> _filteredList = [];
+  bool _isDownloading = false;
 
   @override
   void initState() {
@@ -82,7 +92,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        title:Text("Transaction History"),
+        title: Text("Transaction History"),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.white,
@@ -120,9 +130,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     ),
                   ),
                   InkWell(
-                    onTap: () {
-                      // download logic
+                    onTap: () async {
+                      setState(() {
+                        _isDownloading = true;
+                      });
+
+                      await _downloadStatementPDF(context, _filteredList);
+
+                      setState(() {
+                        _isDownloading = false;
+                      });
                     },
+
                     borderRadius: BorderRadius.circular(12),
                     child: Card(
                       shape: RoundedRectangleBorder(
@@ -132,18 +151,33 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 10),
                         child: Row(
-                          children: const [
-                            Icon(Icons.file_download_outlined,
-                                color: Color(0xFF018BD3)),
+                          children: [
+                            _isDownloading
+                                ? SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFF018BD3),
+                              ),
+                            )
+                                : Icon(
+                              Icons.file_download_outlined,
+                              color: Color(0xFF018BD3),
+                            ),
                             SizedBox(width: 8),
                             Text(
-                              "Download Statement",
+                              _isDownloading
+                                  ? "Downloading..."
+                                  : "Download Statement",
                               style: TextStyle(
-                                  color: Color(0xFF018BD3),
-                                  fontWeight: FontWeight.w600),
+                                color: Color(0xFF018BD3),
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ],
                         ),
+
                       ),
                     ),
                   ),
@@ -161,7 +195,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   prefixIcon: const Icon(Icons.search, color: Colors.grey),
 
                   hintText: "Search transactions",
-                  hintStyle: const TextStyle(color: Colors.grey,fontWeight: FontWeight.normal),
+                  hintStyle: const TextStyle(
+                      color: Colors.grey, fontWeight: FontWeight.normal),
                   contentPadding:
                   const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   border: OutlineInputBorder(
@@ -182,22 +217,24 @@ class _HistoryScreenState extends State<HistoryScreen> {
             Expanded(
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                itemCount:  _filteredList.length,
-                separatorBuilder: (context, index) => const Divider(
+                itemCount: _filteredList.length,
+                separatorBuilder: (context, index) =>
+                const Divider(
                   color: Colors.grey,
                   thickness: 0.2,
                 ),
                 itemBuilder: (context, index) {
                   final txn = _filteredList[index];
                   return GestureDetector(
-                    onTap:(){
+                    onTap: () {
                       setState(() {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => TransactionDetailScreen(
-                                transaction: txn
-                            ),
+                            builder: (context) =>
+                                TransactionDetailScreen(
+                                    transaction: txn
+                                ),
                           ),
                         );
                       });
@@ -213,10 +250,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         padding: const EdgeInsets.all(8),
                         child:
                         Transform.rotate(
-                          angle: txn.displaySts == "Debit" ? 0 : 3.14, // 0 for Debit, 180° for Credit
+                          angle: txn.displaySts == "Debit" ? 0 : 3.14,
+                          // 0 for Debit, 180° for Credit
                           child: Icon(
                             Icons.arrow_outward,
-                            color: txn.displaySts == "Debit" ? Colors.red : Colors.green,
+                            color: txn.displaySts == "Debit"
+                                ? Colors.red
+                                : Colors.green,
                           ),
                         ),
                       ),
@@ -259,7 +299,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                 fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 3),
-                         Text(
+                          Text(
                             txn.displaySts,
                             style: TextStyle(color: Colors.grey, fontSize: 10),
                           ),
@@ -274,6 +314,95 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _downloadStatementPDF(BuildContext context,
+      List<WalletStatementModel> transactions,) async {
+    try {
+      // 1. Request storage permission
+      final status = await Permission.storage.request();
+      if (!status.isGranted) {
+        Fluttertoast.showToast(
+          msg: "Storage permission is required to download the statement.",
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        return;
+      }
+
+      // 2. Create PDF
+      final pdf = pw.Document();
+
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          build: (context) =>
+          [
+            pw.Center(
+              child: pw.Text(
+                'Transaction Statement',
+                style: pw.TextStyle(
+                  fontSize: 20,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+            ),
+            pw.SizedBox(height: 16),
+            pw.Table.fromTextArray(
+              columnWidths: {
+                0: const pw.FlexColumnWidth(2), // Date
+                1: const pw.FlexColumnWidth(2.5), // Name
+                2: const pw.FlexColumnWidth(1), // Type
+                3: const pw.FlexColumnWidth(2), // Amount
+                4: const pw.FlexColumnWidth(4), // Remark
+              },
+              headers: ['Date', 'Name', 'Type', 'Amount', 'Remark'],
+              data: transactions.map((txn) {
+                final date = formatTransactionDate(txn.tDate);
+                final amount = txn.displaySts == "Credit"
+                    ? "+ ${txn.credit}"
+                    : "- ${txn.debit}";
+                return [
+                  date,
+                  txn.memFirstName,
+                  txn.displaySts,
+                  amount,
+                  txn.remark,
+                ];
+              }).toList(),
+              cellAlignment: pw.Alignment.centerLeft,
+              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              headerDecoration: pw.BoxDecoration(color: PdfColors.grey300),
+              cellStyle: pw.TextStyle(fontSize: 10),
+            ),
+          ],
+        ),
+      );
+
+      final directory = await getExternalStorageDirectory();
+      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final fileName = 'Transaction_Statement_$timestamp.pdf';
+      final filePath = '${directory!.path}/$fileName';
+
+      final file = File(filePath);
+      await file.writeAsBytes(await pdf.save());
+
+      // 4. Success message
+      Fluttertoast.showToast(
+        msg: "PDF saved to: $filePath",
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+      );
+
+      // 5. Open PDF (optional)
+      await OpenFile.open(filePath);
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "Error saving PDF: $e",
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    }
   }
 }
 
@@ -535,6 +664,3 @@ class _FilterSheetState extends State<FilterSheet> {
     );
   }
 }
-
-
-

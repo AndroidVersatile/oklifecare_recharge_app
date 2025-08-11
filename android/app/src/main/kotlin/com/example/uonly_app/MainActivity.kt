@@ -1,4 +1,4 @@
-package   com.uonely.ecard
+package   com.oklife.memberpanel
 
 import io.flutter.embedding.android.FlutterActivity
 

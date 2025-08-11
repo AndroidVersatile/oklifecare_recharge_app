@@ -32,7 +32,7 @@ class CustomElevatedBtn extends StatelessWidget {
           gradient: const LinearGradient(
             colors: [
               Color(0xFFE95168), // Pink
-              Color(0xFFBA68C8), // Purple
+              Color(0xFFE95168), // Purple
             ],
           ),
           borderRadius: BorderRadius.circular(8),

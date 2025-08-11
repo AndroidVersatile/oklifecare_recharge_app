@@ -13,6 +13,7 @@ class _EmergencyFormScreenState extends State<EmergencyFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _photoController = TextEditingController();
   final TextEditingController _mobileController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
@@ -127,12 +128,25 @@ class _EmergencyFormScreenState extends State<EmergencyFormScreen> {
                   TextFormField(
                     controller: _addressController,
                     decoration: inputDecoration.copyWith(
-                      labelText: 'Address',
-                      prefixIcon: Icon(Icons.home, color: pink),
-                      hintText: 'Enter address',
+                      labelText: 'Live Location',
+                      prefixIcon: Icon(Icons.location_on, color: pink),
+                      hintText: 'Enter location',
                     ),
                     validator: (value) =>
-                    value!.isEmpty ? 'Enter address' : null,
+                    value!.isEmpty ? 'Enter location' : null,
+                  ),
+                  SizedBox(height: 20),
+
+                  // Address
+                  TextFormField(
+                    controller: _photoController,
+                    decoration: inputDecoration.copyWith(
+                      labelText: 'Self Photo Permission',
+                      prefixIcon: Icon(Icons.photo, color: pink),
+                      hintText: 'Enter Self Photo Permission',
+                    ),
+                    validator: (value) =>
+                    value!.isEmpty ? 'Enter Self Photo Permission' : null,
                   ),
                   SizedBox(height: 20),
 

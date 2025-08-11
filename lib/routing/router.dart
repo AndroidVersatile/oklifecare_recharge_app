@@ -13,8 +13,10 @@ import '../Screens/Blood Seva/blood_categorey.dart';
 import '../Screens/E-Store/categorey_screen.dart';
 import '../Screens/Emergency/emergency_categorey.dart';
 import '../Screens/Login/home_screen.dart';
+import '../Screens/Login/login_member_panel.dart';
 import '../Screens/Login/mpin_screen.dart';
 import '../Screens/Login/sign_screen.dart';
+import '../Screens/Login/webview_screen_memberpanel.dart';
 import '../Screens/Order/orer_screen.dart';
 import '../Screens/Profile_screen/upgradeid_screen.dart';
 import '../Screens/Profile_screen/wallet_statement.dart';
@@ -59,12 +61,28 @@ GoRouter buildRouter(BuildContext context, String initialRoute) {
         },
       ),
       GoRoute(
+        path: AppPages.loginmemeber,
+        name: AppPages.loginmemeber,
+        builder: (context, state) {
+          return LoginMemberPanelScreen();
+        },
+      ),
+      GoRoute(
         path: AppPages.mpinscreen,
         name: AppPages.mpinscreen,
         builder: (context, state) {
           return MpinScreen();
         },
       ),
+      GoRoute(
+        path: AppPages.webviewScreen,
+        name: AppPages.webviewScreen,
+        builder: (context, state) {
+          final url = state.extra as String;
+          return WebViewScreen(url: url); // <-- Pass the required url
+        },
+      ),
+
       GoRoute(
         path: AppPages.signscreen,
         name: AppPages.signscreen,

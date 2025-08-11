@@ -41,7 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFFE91E63), Color(0xFF9C27B0)],
+                colors: [Color(0xFF018CCF), Color(0xFF018CCF)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -72,23 +72,43 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 IconButton(
                   icon:
-                      const Icon(Icons.settings_outlined, color: Colors.white),
-                  onPressed: () {},
+                      const Icon(Icons.logout, color: Colors.white),
+                  onPressed: () async {
+                    final loginProvider = context.read<ProviderScreen>();
+                    bool isLoggedOut = await loginProvider.cache.logout();
+
+                    if (isLoggedOut) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Logout successful',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      // Using Navigator.of for demonstration, replace with your actual navigation
+                      context.pushNamed(AppPages.customerselection);
+
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Logout failed, try again',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
                 ),
               ],
             ),
           ),
         ),
          body:
-        (userDetail == null || walletBalance == null)
-            ? Center(
-                child: Image.asset(
-                  Assets.noData,
-                  height: 300,
-                  width: 300,
-                ),
-              )
-            :
+
         SingleChildScrollView(
                 child: Padding(
                     padding: EdgeInsets.all(8),
@@ -113,19 +133,19 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 Padding(
                                   padding: EdgeInsets.only(top: 20),
-                                  child: Text('Account Holder',
+                                  child: Text('Member Name',
                                       style: TextStyle(
                                           color: Colors.white, fontSize: 14)),
                                 ),
                                 Text(
-                                  '${userDetail.memFirstName} ${userDetail.lastName}',
+                                  '${userDetail?.memFirstName} ${userDetail?.lastName}',
                                   style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(height: 20),
-                                Text('Account Number',
+                                Text('Id No',
                                     style: TextStyle(
                                         color: Colors.white, fontSize: 14)),
                                 Row(
@@ -135,38 +155,51 @@ class _HomeScreenState extends State<HomeScreen> {
                                     Row(
                                       children: [
                                         Text(
-                                          _isAccountNumberVisible
-                                              ? userDetail.accountNo
-                                              : '•••• •••• ••••',
+                                          // _isAccountNumberVisible
+                                          //     ? userDetail.accountNo
+                                          //     : '•••• •••• ••••',
+                                          "767 890 567",
                                           style: TextStyle(
                                               color: Colors.white,
                                               fontSize: 18,
                                               fontWeight: FontWeight.bold),
                                         ),
                                         const SizedBox(width: 8),
-                                        GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              _isAccountNumberVisible =
-                                                  !_isAccountNumberVisible;
-                                            });
-                                          },
-                                          child: Icon(
-                                            _isAccountNumberVisible
-                                                ? Icons.visibility
-                                                : Icons.visibility_off,
+
+                                      ],
+                                    ),
+
+                                    const SizedBox(width: 8),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          _isAccountNumberVisible
+                                              ? '₹${walletBalance?.balance.toStringAsFixed(2)}'
+                                              : '₹••••••',
+                                          style: TextStyle(
                                             color: Colors.white,
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 6.0), // Adjust spacing
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                                _isAccountNumberVisible = !_isAccountNumberVisible;
+                                              });
+                                            },
+                                            child: Icon(
+                                              _isAccountNumberVisible ? Icons.visibility : Icons.visibility_off,
+                                              color: Colors.white,
+                                            ),
                                           ),
                                         ),
                                       ],
-                                    ),
-                                    Text(
-                                      '₹${walletBalance.balance.toStringAsFixed(2)}',
-                                      style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold),
-                                    ),
+                                    )
+
+
                                   ],
                                 ),
                                 const Spacer(),
@@ -222,100 +255,154 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                       SizedBox(height: 15),
                                       // Icons Row
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          GestureDetector(
-                                            onTap: () {
-                                              context.pushNamed(AppPages.rechargePlan);
-                                            },
-                                            child: Column(
-                                              children: [
-                                                Image.asset(
-                                                  "assets/mobile.png",
-                                                  height: 50,
-                                                  fit: BoxFit.fill,
-                                                ),
-                                                // Icon(Icons.phone_android, color: Colors.purple, size: 50),
-                                                SizedBox(height: 5),
-                                                Text('Mobile',
-                                                    style: TextStyle(
-                                                        fontSize: 12)),
-                                              ],
+                                      SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        child: Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () {
+                                                context.pushNamed(AppPages.rechargePlan);
+                                              },
+                                              child: Column(
+                                                children: [
+                                                  Image.asset(
+                                                    "assets/mobile.png",
+                                                    height: 50,
+                                                    fit: BoxFit.fill,
+                                                    color: Color(0xFF018CCF),
+                                                    colorBlendMode: BlendMode.srcIn,
+                                                  ),
+                                                  SizedBox(height: 5),
+                                                  Text('Mobile', style: TextStyle(fontSize: 12)),
+                                                ],
+                                              ),
                                             ),
-                                          ),
-                                          GestureDetector(
-                                            onTap: () {
-                                              setState(() {
+                                            SizedBox(width: 16), // spacing between items
+                                            GestureDetector(
+                                              onTap: () {
                                                 context.pushNamed(AppPages.dthRecharge);
-                                              });
-                                            },
-                                            child: Column(
-                                              crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                              children: [
-                                                Image.asset(
-                                                  "assets/dth.png",
-                                                  height: 50,
-                                                  fit: BoxFit.fill,
-                                                ),
-                                                SizedBox(height: 5),
-                                                Text('DTH', style: TextStyle(
-                                                        fontSize: 12)),
-                                              ],
+                                              },
+                                              child: Column(
+                                                children: [
+                                                  Image.asset(
+                                                    "assets/dth.png",
+                                                    height: 50,
+                                                    fit: BoxFit.fill,
+                                                    color: Color(0xFF018CCF),
+                                                    colorBlendMode: BlendMode.srcIn,
+                                                  ),
+                                                  SizedBox(height: 5),
+                                                  Text('DTH', style: TextStyle(fontSize: 12)),
+                                                ],
+                                              ),
                                             ),
-                                          ),
-                                          GestureDetector(
-                                            onTap:(){
-                                              setState(() {
+                                            SizedBox(width: 16),
+                                            GestureDetector(
+                                              onTap: () {
                                                 context.pushNamed(AppPages.electricityScreen);
-                                              });
-                                            },
-                                            child: Column(
-                                              children: [
-                                                Image.asset(
-                                                  "assets/electricity.png",
-                                                  height: 50,
-                                                  fit: BoxFit.fill,
-                                                ),
-                                                SizedBox(height: 5),
-                                                Text('Electricity',
-                                                    style: TextStyle(
-                                                        fontSize: 12)),
-                                              ],
+                                              },
+                                              child: Column(
+                                                children: [
+                                                  Image.asset(
+                                                    "assets/electricity.png",
+                                                    height: 50,
+                                                    fit: BoxFit.fill,
+                                                    color: Color(0xFF018CCF),
+                                                    colorBlendMode: BlendMode.srcIn,
+                                                  ),
+                                                  SizedBox(height: 5),
+                                                  Text('Electricity', style: TextStyle(fontSize: 12)),
+                                                ],
+                                              ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
+                                            SizedBox(width: 16),
+                                            GestureDetector(
+                                              onTap: () {
+                                                // context.pushNamed(...);
+                                              },
+                                              child: Column(
+                                                children: [
+                                                  Image.asset(
+                                                    "assets/bbps.png",
+                                                    height: 50,
+                                                    fit: BoxFit.fill,
+                                                    color: Color(0xFF018CCF),
+                                                    colorBlendMode: BlendMode.srcIn,
+                                                  ),
+                                                  SizedBox(height: 5),
+                                                  Text('BBPS', style: TextStyle(fontSize: 12)),
+                                                ],
+                                              ),
+                                            ),
+                                            SizedBox(width: 16),
+                                            GestureDetector(
+                                              onTap: () {
+                                                // context.pushNamed(...);
+                                              },
+                                              child: Column(
+                                                children: [
+                                                  Image.asset(
+                                                    "assets/insurance.png",
+                                                    height: 50,
+                                                    fit: BoxFit.fill,
+                                                    color: Color(0xFF018CCF),
+                                                    colorBlendMode: BlendMode.srcIn,
+                                                  ),
+                                                  SizedBox(height: 5),
+                                                  Text('Insurance', style: TextStyle(fontSize: 12)),
+                                                ],
+                                              ),
+                                            ),
+                                            SizedBox(width: 16),
+                                            GestureDetector(
+                                              onTap: () {
+                                                // context.pushNamed(...);
+                                              },
+                                              child: Column(
+                                                children: [
+                                                  Image.asset(
+                                                    "assets/moneytransfer.png",
+                                                    height: 50,
+                                                    fit: BoxFit.fill,
+                                                    color: Color(0xFF018CCF),
+                                                    colorBlendMode: BlendMode.srcIn,
+                                                  ),
+                                                  SizedBox(height: 5),
+                                                  Text('Money Transfer', style: TextStyle(fontSize: 12)),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+
                                     ],
                                   ),
                                 ),
                               ),
 
                               // Second Card (empty or same content)
-                              Expanded(
-                                flex: 1,
-                                child: Container(
-                                  height: 140, // Same fixed height
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.2),
-                                        blurRadius: 4,
-                                        offset: Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  // child: Center(
-                                  //   child: Text("Second Card"),
-                                  // ),
-                                ),
-                              ),
+                              // Expanded(
+                              //   flex: 1,
+                              //   child: Container(
+                              //     height: 140, // Same fixed height
+                              //     decoration: BoxDecoration(
+                              //       color: Colors.white,
+                              //       borderRadius: BorderRadius.circular(12),
+                              //       boxShadow: [
+                              //         BoxShadow(
+                              //           color: Colors.grey.withOpacity(0.2),
+                              //           blurRadius: 4,
+                              //           offset: Offset(0, 2),
+                              //         ),
+                              //       ],
+                              //     ),
+                              //     // child: Center(
+                              //     //   child: Text("Second Card"),
+                              //     // ),
+                              //   ),
+                              // ),
                             ],
                           ),
 
@@ -334,32 +421,32 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                           ),
-                          AppTheme.verticalSpacing(),
-                          Text(
-                            "Benefits & Support",
-                            style: TextStyle(
-                                fontWeight: FontWeight.w500, fontSize: 15),
-                          ),
-                          AppTheme.verticalSpacing(),
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: [
-                                _buildFixedCard('assets/estore.png', "E-Store", () {
-                                  context.pushNamed(AppPages.searchproductscreen);
-                                }),
-                                _buildFixedCard('assets/benefits.png', "Benefits", () {
-                                  context.pushNamed(AppPages.benefitscategoreyscreen);
-                                }),
-                                _buildFixedCard('assets/blood.png', "Blood Seva", () {
-                                  context.pushNamed(AppPages.bloodcategoreyscreen);
-                                }),
-                                _buildFixedCard('assets/emergency.png', "Emergency", () {
-                                  context.pushNamed(AppPages.emergencycategoreyscreen);
-                                }),
-                              ],
-                            ),
-                          ),
+                          // AppTheme.verticalSpacing(),
+                          // Text(
+                          //   "Benefits & Support",
+                          //   style: TextStyle(
+                          //       fontWeight: FontWeight.w500, fontSize: 15),
+                          // ),
+                          // AppTheme.verticalSpacing(),
+                          // SingleChildScrollView(
+                          //   scrollDirection: Axis.horizontal,
+                          //   child: Row(
+                          //     children: [
+                          //       _buildFixedCard('assets/estore.png', "E-Store", () {
+                          //         context.pushNamed(AppPages.searchproductscreen);
+                          //       }),
+                          //       _buildFixedCard('assets/benefits.png', "Benefits", () {
+                          //         context.pushNamed(AppPages.benefitscategoreyscreen);
+                          //       }),
+                          //       _buildFixedCard('assets/blood.png', "Blood Seva", () {
+                          //         context.pushNamed(AppPages.bloodcategoreyscreen);
+                          //       }),
+                          //       _buildFixedCard('assets/emergency.png', "Emergency", () {
+                          //         context.pushNamed(AppPages.emergencycategoreyscreen);
+                          //       }),
+                          //     ],
+                          //   ),
+                          // ),
 
                           AppTheme.verticalSpacing(mul: 1),
                           Row(
@@ -367,9 +454,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               _buildFixedHorizontalCard(
                                 'assets/order.png',
-                                "My Order",
+                                "Recharge History",
                                 onTap: () {
-                                  context.pushNamed(AppPages.myorderscreen);
+                                  // context.pushNamed(AppPages.myorderscreen);
                                 },
                               ),
                               _buildFixedHorizontalCard(
@@ -426,7 +513,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     child: SizedBox(
                                       height: 100,
                                       child: Image.asset(
-                                        'assets/offeradd2.png',
+                                        'assets/offeradd.png',
                                         fit: BoxFit.fill,
                                       ),
                                     ),
@@ -436,336 +523,344 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           AppTheme.verticalSpacing(),
-                          Row(
-                            children: [
-                              Expanded(
-                                flex: 2,
-                                child: Container(
-                                  height:
-                                      150, // Fixed height to match the image
-                                  margin: EdgeInsets.only(right: 8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.2),
-                                        blurRadius: 4,
-                                        offset: Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  padding: EdgeInsets.all(12),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      // Title and View All
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Flexible(
-                                            child: Text(
-                                              'Services',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 13),
-                                              overflow: TextOverflow
-                                                  .ellipsis, // Ellipsis to avoid overflow
-                                            ),
-                                          ),
-                                          Text(
-                                            'View All',
-                                            style: TextStyle(
-                                                color: Colors.red,
-                                                fontSize: 13,decoration:TextDecoration.underline,decorationColor: Colors.red),
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(height: 15),
-                                      // Icons Row
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          GestureDetector(
-                                            onTap: () {
-                                              // context.pushNamed(AppPages.rechargePlan);
-                                            },
-                                            child: Column(
-                                              children: [
-                                                Image.asset(
-                                                  "assets/ambulance.png",
-                                                  height: 50,
-                                                  fit: BoxFit.fill,
-                                                ),
-                                                // Icon(Icons.warning_amber, color: Colors.purple, size:45),
-                                                SizedBox(height: 5),
-                                                Text('Ambulance',
-                                                    style: TextStyle(
-                                                        fontSize: 12)),
-                                              ],
-                                            ),
-                                          ),
-                                          GestureDetector(
-                                            onTap: () {
-                                              setState(() {
-                                                // context.pushNamed(AppPages.dthRecharge);
-                                              });
-                                            },
-                                            child: Column(
-                                              children: [
-                                                Image.asset(
-                                                  "assets/health.png",
-                                                  height: 50,
-                                                  fit: BoxFit.fill,
-                                                ),
-                                                SizedBox(height: 5),
-                                                Text('Health',
-                                                    style: TextStyle(
-                                                        fontSize: 12)),
-                                              ],
-                                            ),
-                                          ),
-                                          Column(
-                                            children: [
-                                              Image.asset(
-                                                "assets/education.png",
-                                                height: 50,
-                                                fit: BoxFit.fill,
-                                              ),
-                                              SizedBox(height: 5),
-                                              Text('Education',
-                                                  style: TextStyle(
-                                                      fontSize: 12)),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-
-                              // Second Card (empty or same content)
-                              Expanded(
-                                flex: 1,
-                                child: Container(
-                                  height: 150, // Same fixed height
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.2),
-                                        blurRadius: 4,
-                                        offset: Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      // Title and View All
-                                      Padding(
-                                        padding: const EdgeInsets.all(2.0),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                'Apps by Uonely',
-                                                style: TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.w500,
-                                                    fontSize: 13),
-                                                // overflow: TextOverflow.ellipsis, // Ellipsis to avoid overflow
-                                              ),
-                                            ),
-                                            Text(
-                                              'View All',
-                                              style: TextStyle(
-                                                  color: Colors.red,
-                                                  fontSize: 13,decoration:TextDecoration.underline,decorationColor: Colors.red),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      SizedBox(height: 15),
-                                      // Icons Row
-                                      Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            GestureDetector(
-                                              onTap: () {
-                                                // context.pushNamed(AppPages.rechargePlan);
-                                              },
-                                              child: Padding(
-                                                padding: const EdgeInsets.all(2.0),
-                                                child: Column(
-                                                  children: [
-                                                    Image.asset(
-                                                      "assets/umart.png",
-                                                      height: 45,
-                                                      fit: BoxFit.fill,
-                                                    ),// Icon(Icons.warning_amber, color: Colors.purple, size:45),
-                                                    SizedBox(height: 5),
-                                                    Text('U Mart',
-                                                        style: TextStyle(
-                                                            fontSize: 11)),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                            GestureDetector(
-                                              onTap: () {
-                                                setState(() {
-                                                  // context.pushNamed(AppPages.dthRecharge);
-                                                });
-                                              },
-                                              child: Column(
-                                                children: [
-                                                  Image.asset(
-                                                    "assets/admission.png",
-                                                    height: 45,
-                                                    fit: BoxFit.fill,
-                                                  ),
-                                                  SizedBox(height: 5),
-                                                  Text('U Admission',
-                                                      style: TextStyle(
-                                                          fontSize: 11)),
-                                                ],
-                                              ),
-                                            ),
-                                          ])
-                                    ],
-                                  ),
-                                ),
-                              )
-                            ],
-                          ),
-                          AppTheme.verticalSpacing(mul: 1),
-                          Container(
-                            height: 140, // Fixed height to match the image
-                            margin: EdgeInsets.only(right: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.2),
-                                  blurRadius: 4,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            padding: EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Title and View All
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        'Our Links',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 13),
-                                        overflow: TextOverflow
-                                            .ellipsis, // Ellipsis to avoid overflow
-                                      ),
-                                    ),
-                                    Text(
-                                      'View All',
-                                      style: TextStyle(
-                                          color: Colors.red, fontSize: 13,decoration:TextDecoration.underline,decorationColor: Colors.red),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 15),
-                                // Icons Row
-                                Row(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    GestureDetector(
-                                      onTap: () {
-                                        // context.pushNamed(AppPages.rechargePlan);
-                                      },
-                                      child: Column(
-                                        children: [
-                                          Image.asset(
-                                            "assets/govt.png",
-                                            height: 50,
-                                            fit: BoxFit.fill,
-                                          ),
-                                          SizedBox(height: 5),
-                                          Text('Govt.',
-                                              style: TextStyle(fontSize: 12)),
-                                        ],
-                                      ),
-                                    ),
-                                    GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          // context.pushNamed(AppPages.dthRecharge);
-                                        });
-                                      },
-                                      child: Column(
-                                        children: [
-                                          Image.asset(
-                                            "assets/finance.png",
-                                            height: 50,
-                                            fit: BoxFit.fill,
-                                          ),
-                                          SizedBox(height: 5),
-                                          Text('Finance',
-                                              style: TextStyle(fontSize: 12)),
-                                        ],
-                                      ),
-                                    ),
-                                    Column(
-                                      children: [
-                                        Image.asset(
-                                          "assets/business.png",
-                                          height: 50,
-                                          fit: BoxFit.fill,
-                                        ),
-                                        SizedBox(height: 5),
-                                        Text('Business',
-                                            style: TextStyle(fontSize: 12)),
-                                      ],
-                                    ),
-                                    Column(
-                                      children: [
-                                        Image.asset(
-                                          "assets/career.png",
-                                          height: 50,
-                                          fit: BoxFit.fill,
-                                        ),
-                                        SizedBox(height: 5),
-                                        Text('Career',
-                                            style: TextStyle(fontSize: 12)),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
+                          // Row(
+                          //   children: [
+                          //     Expanded(
+                          //       flex: 2,
+                          //       child: Container(
+                          //         height:
+                          //             150, // Fixed height to match the image
+                          //         margin: EdgeInsets.only(right: 8),
+                          //         decoration: BoxDecoration(
+                          //           color: Colors.white,
+                          //           borderRadius: BorderRadius.circular(12),
+                          //           boxShadow: [
+                          //             BoxShadow(
+                          //               color: Colors.grey.withOpacity(0.2),
+                          //               blurRadius: 4,
+                          //               offset: Offset(0, 2),
+                          //             ),
+                          //           ],
+                          //         ),
+                          //         padding: EdgeInsets.all(12),
+                          //         child: Column(
+                          //           crossAxisAlignment:
+                          //               CrossAxisAlignment.start,
+                          //           children: [
+                          //             // Title and View All
+                          //             Row(
+                          //               mainAxisAlignment:
+                          //                   MainAxisAlignment.spaceBetween,
+                          //               children: [
+                          //                 Flexible(
+                          //                   child: Text(
+                          //                     'Services',
+                          //                     style: TextStyle(
+                          //                         fontWeight: FontWeight.w500,
+                          //                         fontSize: 13),
+                          //                     overflow: TextOverflow
+                          //                         .ellipsis, // Ellipsis to avoid overflow
+                          //                   ),
+                          //                 ),
+                          //                 Text(
+                          //                   'View All',
+                          //                   style: TextStyle(
+                          //                       color: Colors.red,
+                          //                       fontSize: 13,decoration:TextDecoration.underline,decorationColor: Colors.red),
+                          //                 ),
+                          //               ],
+                          //             ),
+                          //             SizedBox(height: 15),
+                          //             // Icons Row
+                          //             Row(
+                          //               crossAxisAlignment:
+                          //                   CrossAxisAlignment.start,
+                          //               mainAxisAlignment:
+                          //                   MainAxisAlignment.spaceBetween,
+                          //               children: [
+                          //                 GestureDetector(
+                          //                   onTap: () {
+                          //                     // context.pushNamed(AppPages.rechargePlan);
+                          //                   },
+                          //                   child: Column(
+                          //                     children: [
+                          //                       Image.asset(
+                          //                         "assets/ambulance.png",
+                          //                         height: 50,
+                          //                         fit: BoxFit.fill,
+                          //                       ),
+                          //                       // Icon(Icons.warning_amber, color: Colors.purple, size:45),
+                          //                       SizedBox(height: 5),
+                          //                       Text('Ambulance',
+                          //                           style: TextStyle(
+                          //                               fontSize: 12)),
+                          //                     ],
+                          //                   ),
+                          //                 ),
+                          //                 GestureDetector(
+                          //                   onTap: () {
+                          //                     setState(() {
+                          //                       // context.pushNamed(AppPages.dthRecharge);
+                          //                     });
+                          //                   },
+                          //                   child: Column(
+                          //                     children: [
+                          //                       Image.asset(
+                          //                         "assets/health.png",
+                          //                         height: 50,
+                          //                         fit: BoxFit.fill,
+                          //                       ),
+                          //                       SizedBox(height: 5),
+                          //                       Text('Health',
+                          //                           style: TextStyle(
+                          //                               fontSize: 12)),
+                          //                     ],
+                          //                   ),
+                          //                 ),
+                          //                 Column(
+                          //                   children: [
+                          //                     Image.asset(
+                          //                       "assets/education.png",
+                          //                       height: 50,
+                          //                       fit: BoxFit.fill,
+                          //                     ),
+                          //                     SizedBox(height: 5),
+                          //                     Text('Education',
+                          //                         style: TextStyle(
+                          //                             fontSize: 12)),
+                          //                   ],
+                          //                 ),
+                          //               ],
+                          //             ),
+                          //           ],
+                          //         ),
+                          //       ),
+                          //     ),
+                          //
+                          //     // Second Card (empty or same content)
+                          //     Expanded(
+                          //       flex: 1,
+                          //       child: Container(
+                          //         height: 150, // Same fixed height
+                          //         decoration: BoxDecoration(
+                          //           color: Colors.white,
+                          //           borderRadius: BorderRadius.circular(12),
+                          //           boxShadow: [
+                          //             BoxShadow(
+                          //               color: Colors.grey.withOpacity(0.2),
+                          //               blurRadius: 4,
+                          //               offset: Offset(0, 2),
+                          //             ),
+                          //           ],
+                          //         ),
+                          //         child: Column(
+                          //           crossAxisAlignment:
+                          //               CrossAxisAlignment.start,
+                          //           children: [
+                          //             // Title and View All
+                          //             Padding(
+                          //               padding: const EdgeInsets.all(2.0),
+                          //               child: Row(
+                          //                 mainAxisAlignment:
+                          //                     MainAxisAlignment.spaceBetween,
+                          //                 children: [
+                          //                   Expanded(
+                          //                     child: Text(
+                          //                       'Apps by Uonely',
+                          //                       style: TextStyle(
+                          //                           fontWeight:
+                          //                               FontWeight.w500,
+                          //                           fontSize: 13),
+                          //                       // overflow: TextOverflow.ellipsis, // Ellipsis to avoid overflow
+                          //                     ),
+                          //                   ),
+                          //                   Text(
+                          //                     'View All',
+                          //                     style: TextStyle(
+                          //                         color: Colors.red,
+                          //                         fontSize: 13,decoration:TextDecoration.underline,decorationColor: Colors.red),
+                          //                   ),
+                          //                 ],
+                          //               ),
+                          //             ),
+                          //             SizedBox(height: 15),
+                          //             // Icons Row
+                          //             Row(
+                          //                 crossAxisAlignment:
+                          //                     CrossAxisAlignment.start,
+                          //                 mainAxisAlignment:
+                          //                     MainAxisAlignment.spaceBetween,
+                          //                 children: [
+                          //                   GestureDetector(
+                          //                     onTap: () {
+                          //                       // context.pushNamed(AppPages.rechargePlan);
+                          //                     },
+                          //                     child: Padding(
+                          //                       padding: const EdgeInsets.all(2.0),
+                          //                       child: Column(
+                          //                         children: [
+                          //                           Image.asset(
+                          //                             "assets/umart.png",
+                          //                             height: 45,
+                          //                             fit: BoxFit.fill,
+                          //                           ),// Icon(Icons.warning_amber, color: Colors.purple, size:45),
+                          //                           SizedBox(height: 5),
+                          //                           Text('U Mart',
+                          //                               style: TextStyle(
+                          //                                   fontSize: 11)),
+                          //                         ],
+                          //                       ),
+                          //                     ),
+                          //                   ),
+                          //                   GestureDetector(
+                          //                     onTap: () {
+                          //                       setState(() {
+                          //                         // context.pushNamed(AppPages.dthRecharge);
+                          //                       });
+                          //                     },
+                          //                     child: Column(
+                          //                       children: [
+                          //                         Image.asset(
+                          //                           "assets/admission.png",
+                          //                           height: 45,
+                          //                           fit: BoxFit.fill,
+                          //                         ),
+                          //                         SizedBox(height: 5),
+                          //                         Text('U Admission',
+                          //                             style: TextStyle(
+                          //                                 fontSize: 11)),
+                          //                       ],
+                          //                     ),
+                          //                   ),
+                          //                 ])
+                          //           ],
+                          //         ),
+                          //       ),
+                          //     )
+                          //   ],
+                          // ),
+                          // AppTheme.verticalSpacing(mul: 1),
+                          // Container(
+                          //   height: 140, // Fixed height to match the image
+                          //   margin: EdgeInsets.only(right: 8),
+                          //   decoration: BoxDecoration(
+                          //     color: Colors.white,
+                          //     borderRadius: BorderRadius.circular(12),
+                          //     boxShadow: [
+                          //       BoxShadow(
+                          //         color: Colors.grey.withOpacity(0.2),
+                          //         blurRadius: 4,
+                          //         offset: Offset(0, 2),
+                          //       ),
+                          //     ],
+                          //   ),
+                          //   padding: EdgeInsets.all(12),
+                          //   child: Column(
+                          //     crossAxisAlignment: CrossAxisAlignment.start,
+                          //     children: [
+                          //       // Title and View All
+                          //       Row(
+                          //         mainAxisAlignment:
+                          //             MainAxisAlignment.spaceBetween,
+                          //         children: [
+                          //           Flexible(
+                          //             child: Text(
+                          //               'Our Links',
+                          //               style: TextStyle(
+                          //                   fontWeight: FontWeight.w500,
+                          //                   fontSize: 13),
+                          //               overflow: TextOverflow
+                          //                   .ellipsis, // Ellipsis to avoid overflow
+                          //             ),
+                          //           ),
+                          //           Text(
+                          //             'View All',
+                          //             style: TextStyle(
+                          //                 color: Colors.red, fontSize: 13,decoration:TextDecoration.underline,decorationColor: Colors.red),
+                          //           ),
+                          //         ],
+                          //       ),
+                          //       SizedBox(height: 15),
+                          //       // Icons Row
+                          //       Row(
+                          //         crossAxisAlignment:
+                          //             CrossAxisAlignment.start,
+                          //         mainAxisAlignment:
+                          //             MainAxisAlignment.spaceBetween,
+                          //         children: [
+                          //           GestureDetector(
+                          //             onTap: () {
+                          //               // context.pushNamed(AppPages.rechargePlan);
+                          //             },
+                          //             child: Column(
+                          //               children: [
+                          //                 Image.asset(
+                          //                   "assets/govt.png",
+                          //                   height: 50,
+                          //                   fit: BoxFit.fill,
+                          //                   color: Color(0xFF018CCF),
+                          //                   colorBlendMode: BlendMode.srcIn,
+                          //                 ),
+                          //                 SizedBox(height: 5),
+                          //                 Text('Govt.',
+                          //                     style: TextStyle(fontSize: 12)),
+                          //               ],
+                          //             ),
+                          //           ),
+                          //           GestureDetector(
+                          //             onTap: () {
+                          //               setState(() {
+                          //                 // context.pushNamed(AppPages.dthRecharge);
+                          //               });
+                          //             },
+                          //             child: Column(
+                          //               children: [
+                          //                 Image.asset(
+                          //                   "assets/finance.png",
+                          //                   height: 50,
+                          //                   fit: BoxFit.fill,
+                          //                   color: Color(0xFF018CCF),
+                          //                   colorBlendMode: BlendMode.srcIn,
+                          //                 ),
+                          //                 SizedBox(height: 5),
+                          //                 Text('Finance',
+                          //                     style: TextStyle(fontSize: 12)),
+                          //               ],
+                          //             ),
+                          //           ),
+                          //           Column(
+                          //             children: [
+                          //               Image.asset(
+                          //                 "assets/business.png",
+                          //                 height: 50,
+                          //                 fit: BoxFit.fill,
+                          //                 color: Color(0xFF018CCF),
+                          //                 colorBlendMode: BlendMode.srcIn,
+                          //               ),
+                          //               SizedBox(height: 5),
+                          //               Text('Business',
+                          //                   style: TextStyle(fontSize: 12)),
+                          //             ],
+                          //           ),
+                          //           Column(
+                          //             children: [
+                          //               Image.asset(
+                          //                 "assets/career.png",
+                          //                 height: 50,
+                          //                 fit: BoxFit.fill,
+                          //                 color: Color(0xFF018CCF),
+                          //                 colorBlendMode: BlendMode.srcIn,
+                          //               ),
+                          //               SizedBox(height: 5),
+                          //               Text('Career',
+                          //                   style: TextStyle(fontSize: 12)),
+                          //             ],
+                          //           ),
+                          //         ],
+                          //       ),
+                          //     ],
+                          //   ),
+                          // ),
                         ]))));
   }
   Widget _buildFixedCard(String imagePath, String label, VoidCallback onTap) {
@@ -827,6 +922,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   imagePath,
                   height: 30,
                   fit: BoxFit.fill,
+                  color: Color(0xFF018CCF),
+                  colorBlendMode: BlendMode.srcIn,
                 ),
                 SizedBox(width: 6),
                 Expanded(
