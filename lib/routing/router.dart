@@ -7,17 +7,10 @@ import 'package:uonly_app/Screens/Profile_screen/cashback_report.dart';
 import 'package:uonly_app/Screens/Profile_screen/changepassword_screen.dart';
 import 'package:uonly_app/Screens/Profile_screen/kyc_screen.dart';
 import 'package:uonly_app/Screens/Profile_screen/updatedprofile_screen.dart';
-
-import '../Screens/Benefits/benefits_categoreyscreen.dart';
-import '../Screens/Blood Seva/blood_categorey.dart';
-import '../Screens/E-Store/categorey_screen.dart';
-import '../Screens/Emergency/emergency_categorey.dart';
 import '../Screens/Login/home_screen.dart';
 import '../Screens/Login/login_member_panel.dart';
-import '../Screens/Login/mpin_screen.dart';
 import '../Screens/Login/sign_screen.dart';
 import '../Screens/Login/webview_screen_memberpanel.dart';
-import '../Screens/Order/orer_screen.dart';
 import '../Screens/Profile_screen/upgradeid_screen.dart';
 import '../Screens/Profile_screen/wallet_statement.dart';
 import '../Screens/Recharge_Screen/dth_recharge_screen.dart';
@@ -67,13 +60,7 @@ GoRouter buildRouter(BuildContext context, String initialRoute) {
           return LoginMemberPanelScreen();
         },
       ),
-      GoRoute(
-        path: AppPages.mpinscreen,
-        name: AppPages.mpinscreen,
-        builder: (context, state) {
-          return MpinScreen();
-        },
-      ),
+
       GoRoute(
         path: AppPages.webviewScreen,
         name: AppPages.webviewScreen,
@@ -215,41 +202,6 @@ GoRouter buildRouter(BuildContext context, String initialRoute) {
         name: AppPages.withdrawRequestFormScreen,
         builder: (context, state) {
           return WithdrawRequestFormScreen();
-        },
-      ),
-      GoRoute(
-        path: AppPages.searchproductscreen,
-        name: AppPages.searchproductscreen,
-        builder: (context, state) {
-          return SearchProductScreen();
-        },
-      ),
-      GoRoute(
-        path: AppPages.benefitscategoreyscreen,
-        name: AppPages.benefitscategoreyscreen,
-        builder: (context, state) {
-          return SearchBenefitsScreen();
-        },
-      ),
-      GoRoute(
-        path: AppPages.bloodcategoreyscreen,
-        name: AppPages.bloodcategoreyscreen,
-        builder: (context, state) {
-          return BloodCategoreyScreen();
-        },
-      ),
-      GoRoute(
-        path: AppPages.emergencycategoreyscreen,
-        name: AppPages.emergencycategoreyscreen,
-        builder: (context, state) {
-          return EmergencyCategoreyScreen();
-        },
-      ),
-      GoRoute(
-        path: AppPages.myorderscreen,
-        name: AppPages.myorderscreen,
-        builder: (context, state) {
-          return MyOrderScreen();
         },
       ),
     ],

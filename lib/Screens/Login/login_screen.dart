@@ -2,6 +2,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,29 +22,35 @@ class _LoginScreenState extends State<LoginScreen> {
   String encodeBase64(String value) {
     return base64.encode(utf8.encode(value));
   }
-
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       String userId = _userIdController.text.trim();
       String password = _passwordController.text.trim();
-
-      // Encode
-      String encodedUserId = encodeBase64(userId);
-      String encodedPassword = encodeBase64(password);
-
-      // Final URL
-      String url =
-          "https://oklifecare.com/Dashboard/App_Login.aspx?Auth=$encodedUserId&AuthBy=$encodedPassword";
-
-      print("Login URL: $url"); // ✅ Print URL here
-
-      // Save in SharedPreferences
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString("user_id", userId);
-      await prefs.setString("password", password);
-
-      // Navigate to WebView screen
-      context.pushNamed(AppPages.CustomBottomNavBar);
+      final loginProvider = Provider.of<ProviderScreen>(context, listen: false);
+      final result = await loginProvider.loginUser(userId, password);
+      if (result['Status'] == 'True') {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString("user_id", userId);
+        await prefs.setString("password", password);
+        Fluttertoast.showToast(
+          msg: result['Message'] ?? "Login Successful",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER, // center position
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+        context.pushNamed(AppPages.CustomBottomNavBar);
+      } else {
+        Fluttertoast.showToast(
+          msg: result['Message'] ?? "Login failed",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+      }
     }
   }
 
@@ -179,23 +186,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                       backgroundColor: Color(0xFFD81B5B),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widthScale(25)),
                                       ),),
-                                    // onPressed: () async {
-                                    //   if (_formKey.currentState!.validate()) {
-                                    //     String userId = _userIdController.text.trim();
-                                    //     String password = _passwordController.text.trim();
-                                    //     var res = await loginProvider.loginUser(userId, password);
-                                    //     if (res['Status'] == 'True') {
-                                    //       ScaffoldMessenger.of(context).showSnackBar(
-                                    //         SnackBar(content: Text("✅ Login Successful")),
-                                    //       );
-                                    //       context.pushNamed(AppPages.CustomBottomNavBar);
-                                    //     } else {
-                                    //       ScaffoldMessenger.of(context).showSnackBar(
-                                    //         SnackBar(content: Text(res['Message'] ?? "Login Failed"),
-                                    //         ),);
-                                    //     }
-                                    //   }
-                                    // },
                                     onPressed: _handleLogin,
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,

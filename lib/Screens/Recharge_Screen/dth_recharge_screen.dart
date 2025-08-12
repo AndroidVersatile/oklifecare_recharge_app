@@ -17,7 +17,7 @@ class _DthRechargeScreenState extends State<DthRechargeScreen> {
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-      await context.read<ProviderScreen>().getRechargeOperator('RA==');
+      // await context.read<ProviderScreen>().getRechargeOperator('RA==');
     });
     super.initState();
   }

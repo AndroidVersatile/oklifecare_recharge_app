@@ -155,77 +155,79 @@ class _RechargeDetailScreenState extends State<RechargeDetailScreen> {
                   AppTheme.verticalSpacing(mul: 2),
                   CustomElevatedBtn(
                     isBigSize: true,
-                    onPressed: isLoading
-                        ? null
-                        : () async {
-                      if (!formKey.currentState!.validate()) return;
-
-                      setState(() => isLoading = true);
-
-                      final response = await provider.prepaidRecharge(
-                        number: widget.mobile,
-                        amount: widget.amount,
-                        operator: widget.operator.id.toString(),
-                      );
-
-                      setState(() => isLoading = false);
-
-                      final isSuccess = response['success'] ?? false;
-                      final message = response['message'] ?? 'Something went wrong';
-
-                      if (!mounted) return;
-
-                      showDialog(
-                        context: context,
-                        builder: (_) => Dialog(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                CircleAvatar(
-                                  radius: 30,
-                                  backgroundColor: isSuccess ? Colors.green : Colors.red,
-                                  child: Icon(
-                                    isSuccess ? Icons.check_circle : Icons.error,
-                                    color: Colors.white,
-                                    size: 40,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  isSuccess ? 'Recharge Successful' : 'Recharge Failed',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: isSuccess ? Colors.green : Colors.red,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  message,
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    fontSize: 14,
-                                    color: Colors.black54,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                    if (isSuccess) Navigator.of(context).pop();
-                                  },
-                                  child: const Text(
-                                    'OK',
-                                    style: TextStyle(fontSize: 15, color: Colors.blueAccent),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
+                    onPressed:
+                    // isLoading
+                    //     ? null
+                    //     :
+                        () async {
+                      // if (!formKey.currentState!.validate()) return;
+                      //
+                      // setState(() => isLoading = true);
+                      //
+                      // final response = await provider.prepaidRecharge(
+                      //   number: widget.mobile,
+                      //   amount: widget.amount,
+                      //   operator: widget.operator.id.toString(),
+                      // );
+                      //
+                      // setState(() => isLoading = false);
+                      //
+                      // final isSuccess = response['success'] ?? false;
+                      // final message = response['message'] ?? 'Something went wrong';
+                      //
+                      // if (!mounted) return;
+                      //
+                      // showDialog(
+                      //   context: context,
+                      //   builder: (_) => Dialog(
+                      //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      //     child: Padding(
+                      //       padding: const EdgeInsets.all(16),
+                      //       child: Column(
+                      //         mainAxisSize: MainAxisSize.min,
+                      //         children: [
+                      //           CircleAvatar(
+                      //             radius: 30,
+                      //             backgroundColor: isSuccess ? Colors.green : Colors.red,
+                      //             child: Icon(
+                      //               isSuccess ? Icons.check_circle : Icons.error,
+                      //               color: Colors.white,
+                      //               size: 40,
+                      //             ),
+                      //           ),
+                      //           const SizedBox(height: 10),
+                      //           Text(
+                      //             isSuccess ? 'Recharge Successful' : 'Recharge Failed',
+                      //             style: TextStyle(
+                      //               fontSize: 18,
+                      //               fontWeight: FontWeight.bold,
+                      //               color: isSuccess ? Colors.green : Colors.red,
+                      //             ),
+                      //           ),
+                      //           const SizedBox(height: 10),
+                      //           Text(
+                      //             message,
+                      //             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      //               fontSize: 14,
+                      //               color: Colors.black54,
+                      //             ),
+                      //             textAlign: TextAlign.center,
+                      //           ),
+                      //           TextButton(
+                      //             onPressed: () {
+                      //               Navigator.of(context).pop();
+                      //               if (isSuccess) Navigator.of(context).pop();
+                      //             },
+                      //             child: const Text(
+                      //               'OK',
+                      //               style: TextStyle(fontSize: 15, color: Colors.blueAccent),
+                      //             ),
+                      //           ),
+                      //         ],
+                      //       ),
+                      //     ),
+                      //   ),
+                      // );
                     },
                     text: isLoading ? 'Please Wait...' : 'Proceed to Recharge',
                   ),

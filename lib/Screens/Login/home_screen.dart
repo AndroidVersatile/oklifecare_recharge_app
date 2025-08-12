@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:uonly_app/providers/loginProvider.dart';
 import 'package:uonly_app/routing/app_pages.dart';
-
 import '../../constants/assets.dart';
 import '../../theme/app_theme.dart';
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -16,15 +13,13 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool _isAccountNumberVisible = false;
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = Provider.of<ProviderScreen>(context, listen: false);
       provider.fetchUserdata();
-      provider.fetchWalletBalance();
+     provider.fetchWalletBalance();
     });
   }
 
@@ -49,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: AppBar(
               automaticallyImplyLeading: false,
               backgroundColor: Colors
-                  .transparent, // Make background transparent to show gradient
+                  .transparent,
               elevation: 0,
               title: Row(
                 children: [
@@ -87,7 +82,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           backgroundColor: Colors.green,
                         ),
                       );
-                      // Using Navigator.of for demonstration, replace with your actual navigation
                       context.pushNamed(AppPages.customerselection);
 
                     } else {
@@ -107,9 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-         body:
-
-        SingleChildScrollView(
+         body: SingleChildScrollView(
                 child: Padding(
                     padding: EdgeInsets.all(8),
                     child: Column(
@@ -155,9 +147,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                     Row(
                                       children: [
                                         Text(
-                                          // _isAccountNumberVisible
-                                          //     ? userDetail.accountNo
-                                          //     : '•••• •••• ••••',
                                           "767 890 567",
                                           style: TextStyle(
                                               color: Colors.white,
@@ -165,41 +154,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                               fontWeight: FontWeight.bold),
                                         ),
                                         const SizedBox(width: 8),
-
                                       ],
                                     ),
-
                                     const SizedBox(width: 8),
                                     Row(
                                       children: [
                                         Text(
-                                          _isAccountNumberVisible
-                                              ? '₹${walletBalance?.balance.toStringAsFixed(2)}'
-                                              : '₹••••••',
+                                    '₹${walletBalance?.balance.toStringAsFixed(2)}',
+
                                           style: TextStyle(
                                             color: Colors.white,
                                             fontSize: 22,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(left: 6.0), // Adjust spacing
-                                          child: GestureDetector(
-                                            onTap: () {
-                                              setState(() {
-                                                _isAccountNumberVisible = !_isAccountNumberVisible;
-                                              });
-                                            },
-                                            child: Icon(
-                                              _isAccountNumberVisible ? Icons.visibility : Icons.visibility_off,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ),
                                       ],
                                     )
-
-
                                   ],
                                 ),
                                 const Spacer(),
@@ -212,7 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               Expanded(
                                 flex: 2,
                                 child: Container(
-                                  height: 140, // Fixed height to match the image
+                                  height: 140,
                                   margin: EdgeInsets.only(right: 8),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
@@ -319,7 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                             SizedBox(width: 16),
                                             GestureDetector(
                                               onTap: () {
-                                                // context.pushNamed(...);
+
                                               },
                                               child: Column(
                                                 children: [
@@ -381,28 +351,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                               ),
-
-                              // Second Card (empty or same content)
-                              // Expanded(
-                              //   flex: 1,
-                              //   child: Container(
-                              //     height: 140, // Same fixed height
-                              //     decoration: BoxDecoration(
-                              //       color: Colors.white,
-                              //       borderRadius: BorderRadius.circular(12),
-                              //       boxShadow: [
-                              //         BoxShadow(
-                              //           color: Colors.grey.withOpacity(0.2),
-                              //           blurRadius: 4,
-                              //           offset: Offset(0, 2),
-                              //         ),
-                              //       ],
-                              //     ),
-                              //     // child: Center(
-                              //     //   child: Text("Second Card"),
-                              //     // ),
-                              //   ),
-                              // ),
                             ],
                           ),
 
@@ -421,33 +369,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                           ),
-                          // AppTheme.verticalSpacing(),
-                          // Text(
-                          //   "Benefits & Support",
-                          //   style: TextStyle(
-                          //       fontWeight: FontWeight.w500, fontSize: 15),
-                          // ),
-                          // AppTheme.verticalSpacing(),
-                          // SingleChildScrollView(
-                          //   scrollDirection: Axis.horizontal,
-                          //   child: Row(
-                          //     children: [
-                          //       _buildFixedCard('assets/estore.png', "E-Store", () {
-                          //         context.pushNamed(AppPages.searchproductscreen);
-                          //       }),
-                          //       _buildFixedCard('assets/benefits.png', "Benefits", () {
-                          //         context.pushNamed(AppPages.benefitscategoreyscreen);
-                          //       }),
-                          //       _buildFixedCard('assets/blood.png', "Blood Seva", () {
-                          //         context.pushNamed(AppPages.bloodcategoreyscreen);
-                          //       }),
-                          //       _buildFixedCard('assets/emergency.png', "Emergency", () {
-                          //         context.pushNamed(AppPages.emergencycategoreyscreen);
-                          //       }),
-                          //     ],
-                          //   ),
-                          // ),
-
                           AppTheme.verticalSpacing(mul: 1),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -523,344 +444,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           AppTheme.verticalSpacing(),
-                          // Row(
-                          //   children: [
-                          //     Expanded(
-                          //       flex: 2,
-                          //       child: Container(
-                          //         height:
-                          //             150, // Fixed height to match the image
-                          //         margin: EdgeInsets.only(right: 8),
-                          //         decoration: BoxDecoration(
-                          //           color: Colors.white,
-                          //           borderRadius: BorderRadius.circular(12),
-                          //           boxShadow: [
-                          //             BoxShadow(
-                          //               color: Colors.grey.withOpacity(0.2),
-                          //               blurRadius: 4,
-                          //               offset: Offset(0, 2),
-                          //             ),
-                          //           ],
-                          //         ),
-                          //         padding: EdgeInsets.all(12),
-                          //         child: Column(
-                          //           crossAxisAlignment:
-                          //               CrossAxisAlignment.start,
-                          //           children: [
-                          //             // Title and View All
-                          //             Row(
-                          //               mainAxisAlignment:
-                          //                   MainAxisAlignment.spaceBetween,
-                          //               children: [
-                          //                 Flexible(
-                          //                   child: Text(
-                          //                     'Services',
-                          //                     style: TextStyle(
-                          //                         fontWeight: FontWeight.w500,
-                          //                         fontSize: 13),
-                          //                     overflow: TextOverflow
-                          //                         .ellipsis, // Ellipsis to avoid overflow
-                          //                   ),
-                          //                 ),
-                          //                 Text(
-                          //                   'View All',
-                          //                   style: TextStyle(
-                          //                       color: Colors.red,
-                          //                       fontSize: 13,decoration:TextDecoration.underline,decorationColor: Colors.red),
-                          //                 ),
-                          //               ],
-                          //             ),
-                          //             SizedBox(height: 15),
-                          //             // Icons Row
-                          //             Row(
-                          //               crossAxisAlignment:
-                          //                   CrossAxisAlignment.start,
-                          //               mainAxisAlignment:
-                          //                   MainAxisAlignment.spaceBetween,
-                          //               children: [
-                          //                 GestureDetector(
-                          //                   onTap: () {
-                          //                     // context.pushNamed(AppPages.rechargePlan);
-                          //                   },
-                          //                   child: Column(
-                          //                     children: [
-                          //                       Image.asset(
-                          //                         "assets/ambulance.png",
-                          //                         height: 50,
-                          //                         fit: BoxFit.fill,
-                          //                       ),
-                          //                       // Icon(Icons.warning_amber, color: Colors.purple, size:45),
-                          //                       SizedBox(height: 5),
-                          //                       Text('Ambulance',
-                          //                           style: TextStyle(
-                          //                               fontSize: 12)),
-                          //                     ],
-                          //                   ),
-                          //                 ),
-                          //                 GestureDetector(
-                          //                   onTap: () {
-                          //                     setState(() {
-                          //                       // context.pushNamed(AppPages.dthRecharge);
-                          //                     });
-                          //                   },
-                          //                   child: Column(
-                          //                     children: [
-                          //                       Image.asset(
-                          //                         "assets/health.png",
-                          //                         height: 50,
-                          //                         fit: BoxFit.fill,
-                          //                       ),
-                          //                       SizedBox(height: 5),
-                          //                       Text('Health',
-                          //                           style: TextStyle(
-                          //                               fontSize: 12)),
-                          //                     ],
-                          //                   ),
-                          //                 ),
-                          //                 Column(
-                          //                   children: [
-                          //                     Image.asset(
-                          //                       "assets/education.png",
-                          //                       height: 50,
-                          //                       fit: BoxFit.fill,
-                          //                     ),
-                          //                     SizedBox(height: 5),
-                          //                     Text('Education',
-                          //                         style: TextStyle(
-                          //                             fontSize: 12)),
-                          //                   ],
-                          //                 ),
-                          //               ],
-                          //             ),
-                          //           ],
-                          //         ),
-                          //       ),
-                          //     ),
-                          //
-                          //     // Second Card (empty or same content)
-                          //     Expanded(
-                          //       flex: 1,
-                          //       child: Container(
-                          //         height: 150, // Same fixed height
-                          //         decoration: BoxDecoration(
-                          //           color: Colors.white,
-                          //           borderRadius: BorderRadius.circular(12),
-                          //           boxShadow: [
-                          //             BoxShadow(
-                          //               color: Colors.grey.withOpacity(0.2),
-                          //               blurRadius: 4,
-                          //               offset: Offset(0, 2),
-                          //             ),
-                          //           ],
-                          //         ),
-                          //         child: Column(
-                          //           crossAxisAlignment:
-                          //               CrossAxisAlignment.start,
-                          //           children: [
-                          //             // Title and View All
-                          //             Padding(
-                          //               padding: const EdgeInsets.all(2.0),
-                          //               child: Row(
-                          //                 mainAxisAlignment:
-                          //                     MainAxisAlignment.spaceBetween,
-                          //                 children: [
-                          //                   Expanded(
-                          //                     child: Text(
-                          //                       'Apps by Uonely',
-                          //                       style: TextStyle(
-                          //                           fontWeight:
-                          //                               FontWeight.w500,
-                          //                           fontSize: 13),
-                          //                       // overflow: TextOverflow.ellipsis, // Ellipsis to avoid overflow
-                          //                     ),
-                          //                   ),
-                          //                   Text(
-                          //                     'View All',
-                          //                     style: TextStyle(
-                          //                         color: Colors.red,
-                          //                         fontSize: 13,decoration:TextDecoration.underline,decorationColor: Colors.red),
-                          //                   ),
-                          //                 ],
-                          //               ),
-                          //             ),
-                          //             SizedBox(height: 15),
-                          //             // Icons Row
-                          //             Row(
-                          //                 crossAxisAlignment:
-                          //                     CrossAxisAlignment.start,
-                          //                 mainAxisAlignment:
-                          //                     MainAxisAlignment.spaceBetween,
-                          //                 children: [
-                          //                   GestureDetector(
-                          //                     onTap: () {
-                          //                       // context.pushNamed(AppPages.rechargePlan);
-                          //                     },
-                          //                     child: Padding(
-                          //                       padding: const EdgeInsets.all(2.0),
-                          //                       child: Column(
-                          //                         children: [
-                          //                           Image.asset(
-                          //                             "assets/umart.png",
-                          //                             height: 45,
-                          //                             fit: BoxFit.fill,
-                          //                           ),// Icon(Icons.warning_amber, color: Colors.purple, size:45),
-                          //                           SizedBox(height: 5),
-                          //                           Text('U Mart',
-                          //                               style: TextStyle(
-                          //                                   fontSize: 11)),
-                          //                         ],
-                          //                       ),
-                          //                     ),
-                          //                   ),
-                          //                   GestureDetector(
-                          //                     onTap: () {
-                          //                       setState(() {
-                          //                         // context.pushNamed(AppPages.dthRecharge);
-                          //                       });
-                          //                     },
-                          //                     child: Column(
-                          //                       children: [
-                          //                         Image.asset(
-                          //                           "assets/admission.png",
-                          //                           height: 45,
-                          //                           fit: BoxFit.fill,
-                          //                         ),
-                          //                         SizedBox(height: 5),
-                          //                         Text('U Admission',
-                          //                             style: TextStyle(
-                          //                                 fontSize: 11)),
-                          //                       ],
-                          //                     ),
-                          //                   ),
-                          //                 ])
-                          //           ],
-                          //         ),
-                          //       ),
-                          //     )
-                          //   ],
-                          // ),
-                          // AppTheme.verticalSpacing(mul: 1),
-                          // Container(
-                          //   height: 140, // Fixed height to match the image
-                          //   margin: EdgeInsets.only(right: 8),
-                          //   decoration: BoxDecoration(
-                          //     color: Colors.white,
-                          //     borderRadius: BorderRadius.circular(12),
-                          //     boxShadow: [
-                          //       BoxShadow(
-                          //         color: Colors.grey.withOpacity(0.2),
-                          //         blurRadius: 4,
-                          //         offset: Offset(0, 2),
-                          //       ),
-                          //     ],
-                          //   ),
-                          //   padding: EdgeInsets.all(12),
-                          //   child: Column(
-                          //     crossAxisAlignment: CrossAxisAlignment.start,
-                          //     children: [
-                          //       // Title and View All
-                          //       Row(
-                          //         mainAxisAlignment:
-                          //             MainAxisAlignment.spaceBetween,
-                          //         children: [
-                          //           Flexible(
-                          //             child: Text(
-                          //               'Our Links',
-                          //               style: TextStyle(
-                          //                   fontWeight: FontWeight.w500,
-                          //                   fontSize: 13),
-                          //               overflow: TextOverflow
-                          //                   .ellipsis, // Ellipsis to avoid overflow
-                          //             ),
-                          //           ),
-                          //           Text(
-                          //             'View All',
-                          //             style: TextStyle(
-                          //                 color: Colors.red, fontSize: 13,decoration:TextDecoration.underline,decorationColor: Colors.red),
-                          //           ),
-                          //         ],
-                          //       ),
-                          //       SizedBox(height: 15),
-                          //       // Icons Row
-                          //       Row(
-                          //         crossAxisAlignment:
-                          //             CrossAxisAlignment.start,
-                          //         mainAxisAlignment:
-                          //             MainAxisAlignment.spaceBetween,
-                          //         children: [
-                          //           GestureDetector(
-                          //             onTap: () {
-                          //               // context.pushNamed(AppPages.rechargePlan);
-                          //             },
-                          //             child: Column(
-                          //               children: [
-                          //                 Image.asset(
-                          //                   "assets/govt.png",
-                          //                   height: 50,
-                          //                   fit: BoxFit.fill,
-                          //                   color: Color(0xFF018CCF),
-                          //                   colorBlendMode: BlendMode.srcIn,
-                          //                 ),
-                          //                 SizedBox(height: 5),
-                          //                 Text('Govt.',
-                          //                     style: TextStyle(fontSize: 12)),
-                          //               ],
-                          //             ),
-                          //           ),
-                          //           GestureDetector(
-                          //             onTap: () {
-                          //               setState(() {
-                          //                 // context.pushNamed(AppPages.dthRecharge);
-                          //               });
-                          //             },
-                          //             child: Column(
-                          //               children: [
-                          //                 Image.asset(
-                          //                   "assets/finance.png",
-                          //                   height: 50,
-                          //                   fit: BoxFit.fill,
-                          //                   color: Color(0xFF018CCF),
-                          //                   colorBlendMode: BlendMode.srcIn,
-                          //                 ),
-                          //                 SizedBox(height: 5),
-                          //                 Text('Finance',
-                          //                     style: TextStyle(fontSize: 12)),
-                          //               ],
-                          //             ),
-                          //           ),
-                          //           Column(
-                          //             children: [
-                          //               Image.asset(
-                          //                 "assets/business.png",
-                          //                 height: 50,
-                          //                 fit: BoxFit.fill,
-                          //                 color: Color(0xFF018CCF),
-                          //                 colorBlendMode: BlendMode.srcIn,
-                          //               ),
-                          //               SizedBox(height: 5),
-                          //               Text('Business',
-                          //                   style: TextStyle(fontSize: 12)),
-                          //             ],
-                          //           ),
-                          //           Column(
-                          //             children: [
-                          //               Image.asset(
-                          //                 "assets/career.png",
-                          //                 height: 50,
-                          //                 fit: BoxFit.fill,
-                          //                 color: Color(0xFF018CCF),
-                          //                 colorBlendMode: BlendMode.srcIn,
-                          //               ),
-                          //               SizedBox(height: 5),
-                          //               Text('Career',
-                          //                   style: TextStyle(fontSize: 12)),
-                          //             ],
-                          //           ),
-                          //         ],
-                          //       ),
-                          //     ],
-                          //   ),
-                          // ),
                         ]))));
   }
   Widget _buildFixedCard(String imagePath, String label, VoidCallback onTap) {

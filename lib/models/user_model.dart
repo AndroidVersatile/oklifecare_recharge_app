@@ -239,37 +239,25 @@ class UserDetailModel {
     );
   }
 }
-class BalanceModel {
-  final double balance;
-
-  BalanceModel({required this.balance});
-
-  factory BalanceModel.fromJson(Map<String, dynamic> json) {
-    return BalanceModel(
-      balance: json['Balance'].toDouble(),
-    );
-  }
-}
 
 class OperatorModel {
-  int id;
-  String operatorName;
+  final String operatorCode;
+  final String operatorName;
 
   OperatorModel({
-    required this.id,
+    required this.operatorCode,
     required this.operatorName,
   });
 
-  factory OperatorModel.fromJson(Map<String, dynamic> json) => OperatorModel(
-    id: json["Id"],
-    operatorName: json["OperatorName"],
-  );
+  factory OperatorModel.fromJson(Map<String, dynamic> json) {
+    return OperatorModel(
+      operatorCode: json['OperatorCode']?.toString() ?? '',
+      operatorName: json['OperatorName']?.toString() ?? '',
+    );
+  }
 
-  Map<String, dynamic> toJson() => {
-    "Id": id,
-    "OperatorName": operatorName,
-  };
 }
+
 class CircleModel {
   int circleCode;
   String circleName;

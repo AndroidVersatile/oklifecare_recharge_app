@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
@@ -19,6 +20,7 @@ class ProviderScreen extends ChangeNotifier {
   UserDetailModel? _userDetail;
   double currentWalletBalance = 0.0;
   BalanceModel? _walletBalance;
+  BalanceModel? get walletBalance => _walletBalance;
   bool _isLoading = false;
   String? _errorMessage;
   String userFormNo = '';
@@ -26,11 +28,10 @@ class ProviderScreen extends ChangeNotifier {
   final _apiClient = APIService.ApiClient();
   String currentBank = '';
   UserDetailModel? get userDetail => _userDetail;
-  BalanceModel? get walletBalance => _walletBalance;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   List<WalletStatementModel> walletList = List.empty(growable: true);
-  List<OperatorModel> operatorModel = List.empty(growable: true);
+  List<OperatorModel> operatorModel = [];
   List<CircleModel> circleList = List.empty(growable: true);
   List<CashBackShowModel> cashBackShowModel = List.empty(growable: true);
   List<RechargePlanModel> rechargePlanList = List.empty(growable: true);
@@ -50,24 +51,31 @@ class ProviderScreen extends ChangeNotifier {
     notifyListeners();
 
     try {
-      String encodedUsername = base64Encode(utf8.encode(userId));
-      String encodedPassword = base64Encode(utf8.encode(password));
+      final String baseUrl =
+          "https://oklifecare.com/Dashboard/API/RechargeAPI.aspx?reqtype=idlogin";
 
-      final String baseUrl = ApiUrls.baseUrl;
-      final url =
-          "$baseUrl?ReqType=Login&UserId=$encodedUsername&UserPWD=$encodedPassword";
+      final Map<String, String> requestBody = {
+        "loginid": userId,
+        "loginpwd": password
+      };
 
-      final response = await http.get(Uri.parse(url));
+      final response = await http.post(
+        Uri.parse(baseUrl),
+        headers: {
+          "Content-Type": "application/json", // raw JSON body ke liye
+        },
+        body: json.encode(requestBody),
+      );
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-
+        print("Login API Response: $data");
         if (data['Status'] == 'True') {
-          _mobileNo = data['Data'][0]['MobileNo'].toString();
-          userFormNo = base64.encode(utf8.encode(data['Data'][0]['FormNo'].toString()));
           final appCache = AppCache();
+          userFormNo = data['Data'][0]['FormNo'].toString();
           await appCache.saveUserFormNo(userFormNo);
-          String password = data['Data'][0]['Passw'].toString();
-          await appCache.saveUserPass(password);
+          String passFromApi = data['Data'][0]['Passw'].toString();
+          await appCache.saveUserPass(passFromApi);
         } else {
           _errorMessage = data["Message"] ?? "Login failed";
         }
@@ -119,30 +127,90 @@ class ProviderScreen extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
-  /// 💰 Fetch Wallet Balance
   Future<void> fetchWalletBalance() async {
-    _isLoading = true;
-    notifyListeners();
-    final appCache = AppCache();
-    var formno = await appCache.getUserFormNo();
-    final String baseUrl = ApiUrls.baseUrl;
-    final Uri url = Uri.parse(baseUrl).replace(queryParameters: {
-      "ReqType": "GetBalanceWallet",
-      "FormNo": formno,
-    });
     try {
-      final response = await http.get(url);
+      final String baseUrl =
+          "https://oklifecare.com/Dashboard/API/RechargeAPI.aspx?reqtype=balance";
+      final appCache = AppCache();
+      String? formNo = await appCache.getUserFormNo();
+
+      if (formNo == null || formNo.isEmpty) {
+        print("FormNo not found in cache");
+        return;
+      }
+
+      final Map<String, String> requestBody = {
+        "formno": formNo
+      };
+
+      final response = await http.post(
+        Uri.parse(baseUrl),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: json.encode(requestBody),
+      );
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data['Status'] == 'True') {
-          _walletBalance = BalanceModel.fromJson(data['Data'][0]);
+        print("Wallet Balance API Response: $data"); // Console print
+
+        if (data['Status'] == 'True' && data['Data'] != null) {
+          currentWalletBalance = double.tryParse(
+            data['Data'][0]['Balance'].toString(),
+          ) ??
+              0.0;
+          _walletBalance = BalanceModel(balance: currentWalletBalance);
+
+          notifyListeners();
         }
+      } else {
+        print("Error: ${response.statusCode} - ${response.reasonPhrase}");
       }
     } catch (e) {
       print("Error fetching wallet balance: $e");
     }
-    _isLoading = false;
+  }
+  Future<dynamic> getRechargeOperator() async {
+    _isLoading = true;
     notifyListeners();
+
+    try {
+      final response = await _apiClient.dio.post(
+        "${ApiUrls.baseUrl}?reqtype=opcode",
+        data: {
+          "services": "P"
+        },
+        options: Options(
+          headers: {
+            "Content-Type": "application/json",
+          },
+        ),
+      );
+
+      print("Status Code: ${response.statusCode}");
+      print("Raw Response: ${response.data}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        var data = response.data is String ? json.decode(response.data) : response.data;
+
+        if (data['Status'] == 'True' || data['status'] == 200) {
+          operatorModel = List<OperatorModel>.from(
+            (data['Data'] as List).map((e) => OperatorModel.fromJson(e)),
+          );
+        } else {
+          print("API Error: ${data['Message']}");
+        }
+      } else {
+        print("Server Error: ${response.statusCode}");
+      }
+      return response.data;
+    } catch (e) {
+      print("Exception: $e");
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<dynamic> getWalletStatement() async {
@@ -168,26 +236,6 @@ class ProviderScreen extends ChangeNotifier {
     return data;
   }
 
-  Future<Map<String, dynamic>> sendOtp() async {
-    if (_mobileNo == null) {
-      return {"Status": "False", "Message": "Mobile number is missing"};
-    }
-
-    final encodedMobile = base64Encode(utf8.encode(_mobileNo!));
-    final url = "${ApiUrls.baseUrl}?ReqType=Sendotp&MobileNo=$encodedMobile";
-
-    try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data;
-      } else {
-        return {"Status": "False", "Message": "Server error"};
-      }
-    } catch (e) {
-      return {"Status": "False", "Message": "Failed to connect to server"};
-    }
-  }
   Future<Map<String, dynamic>> changePassword({
     required String oldPassword,
     required String newPassword,
@@ -234,27 +282,26 @@ class ProviderScreen extends ChangeNotifier {
     }
   }
 
-  Future<dynamic> getRechargeOperator(type) async {
-    _isLoading = true;
-    notifyListeners();
-    // userId = await cache.getUserFormNo();
-
-    final response =
-    await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
-      'ReqType': 'PrePaidRechargeFillOperator',
-      'OperatorType': type,
-    });
-    var data = json.decode(response.data);
-    if (response.statusCode == 200) {
-      operatorModel = await List.castFrom(data['Data'].map((e) {
-        return OperatorModel.fromJson(e);
-      }).toList());
-      print(operatorModel);
-    }
-    _isLoading = false;
-    notifyListeners();
-    return data;
-  }
+  // Future<dynamic> getRechargeOperator(type) async {
+  //   _isLoading = true;
+  //   notifyListeners();
+  //
+  //   final response =
+  //   await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
+  //     'reqtype': 'opcode'
+  //     // 'OperatorType': type,
+  //   });
+  //   var data = json.decode(response.data);
+  //   if (response.statusCode == 200) {
+  //     operatorModel = await List.castFrom(data['Data'].map((e) {
+  //       return OperatorModel.fromJson(e);
+  //     }).toList());
+  //     print(operatorModel);
+  //   }
+  //   _isLoading = false;
+  //   notifyListeners();
+  //   return data;
+  // }
 
 
   Future<dynamic> getMobileCircle() async {
@@ -312,7 +359,6 @@ class ProviderScreen extends ChangeNotifier {
         return {
           'success': false,
           'message': 'Recharge of ₹$amount for $number has failed. Please try again.',
-          // 'message': 'Recharge of ₹$amount for $number is successful. Thank you for using our service.',
         };
       }
     } catch (e) {
@@ -356,10 +402,7 @@ class ProviderScreen extends ChangeNotifier {
   }) async {
     _isLoading = true;
     notifyListeners();
-
     rechargePlanList.clear();
-
-    // Encode data to base64
     String encodedNumber = base64.encode(utf8.encode(number));
     String encodedCircle = base64.encode(utf8.encode(circle));
     String encodedOperator = base64.encode(utf8.encode(operator));
@@ -872,179 +915,15 @@ class ProviderScreen extends ChangeNotifier {
     return data;
   }
 
-  AccountDetailModel? accountDetailModel;
-  Future<dynamic> getAccountDetails() async {
-    _isLoading = true;
-    notifyListeners();
-    var formno = await cache.getUserFormNo();
 
-    final response =
-    await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
-      'ReqType': 'DepositeAccountDetails',
-      'formNo': formno,
-    });
-    var data = json.decode(response.data);
-    if (data['Status'] == 'True') {
-      var detail = await List.castFrom(data['Data'].map((e) {
-        return AccountDetailModel.fromJson(e);
-      }).toList());
-      accountDetailModel = detail.first;
-      print(accountDetailModel);
-    }
-    _isLoading = false;
-    notifyListeners();
-    return data;
-  }
-  List<DepositImageModel> deposits = List.empty(growable: true);
-  List<DepositImageModel> depositList = [];
-  Future<void> getDepositList() async {
-   _isLoading = true;
-    notifyListeners();
 
-    try {
-      final response =
-      await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
-        'ReqType': 'BannerList',
-        'Type': 'RA==',
-      });
-      var data = json.decode(response.data);
 
-      if (response.statusCode == 200 && data['Data'] != null) {
-        deposits = List<DepositImageModel>.from(
-            data['Data'].map((e) => DepositImageModel.fromJson(e)));
-        depositList = deposits;
-      } else {
-        deposits.clear();
-        depositList.clear();
-      }
-    } catch (e) {
-      deposits.clear();
-      depositList.clear();
-      print("Error fetching deposit list: $e");
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-  List<WithdrawalImageModel> withdrawal = List.empty(growable: true);
-  List<WithdrawalImageModel> withdrawList = [];
-  Future<void> getwithdrawlList() async {
-    _isLoading = true;
-    notifyListeners();
 
-    final response =
-    await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
-      'ReqType': 'BannerList',
-      'Type': 'Vw==',
-    });
-    var data = json.decode(response.data);
-    if (response.statusCode == 200) {
-      withdrawal = List<WithdrawalImageModel>.from(
-          data['Data'].map((e) => WithdrawalImageModel.fromJson(e)));
-      withdrawList = withdrawal;
-    }
-    _isLoading = false;
-    notifyListeners();
-  }
-  Future<Map<String, dynamic>> submitWithdrawalRequest({
-    required String bankID,
-    required String amount,
-    required String remarks,
-  }) async {
-    final url = Uri.parse(
-        'http://uonely.versatileitsolution.com/UserPanel/API/App_Api.aspx?ReqType=WithdrawalRequest');
 
-    var formno = await cache.getUserFormNo(); // Already base64 encoded
-    final Map<String, dynamic> requestBody = {
-      'formNo': formno,
-      'BankID': base64Encode(utf8.encode(bankID)),
-      'Amount': base64Encode(utf8.encode(amount)),
-      'Remarks': base64Encode(utf8.encode(remarks)),
-    };
 
-    // ✅ Print Request Body
-    print("Submitting Withdrawal Request:");
-    print("Request URL: $url");
-    print("Request Body: ${jsonEncode(requestBody)}");
 
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(requestBody),
-      );
 
-      final responseData = jsonDecode(response.body);
 
-      // ✅ Print Response
-      print("API Response Status Code: ${response.statusCode}");
-      print("API Response Body: ${jsonEncode(responseData)}");
-
-      return {
-        'statusCode': response.statusCode,
-        'data': responseData,
-      };
-    } catch (e) {
-      print('❌ Error during API call: $e');
-      return {
-        'statusCode': 500,
-        'data': {
-          'Status': 'False',
-          'Message': 'Something went wrong: $e',
-        },
-      };
-    }
-  }
-
-  Future<dynamic> getDTHCashbackReport({required bool all}) async {
-    _isLoading = true;
-    notifyListeners();
-   var userId = await cache.getUserFormNo();
-
-    final response =
-    await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
-      'ReqType': 'CashbackReport',
-      'FormNo': userId,
-    });
-    var data = json.decode(response.data);
-    if (response.statusCode == 200) {
-      dthCashbackReportList = await List.castFrom(data['Data'].map((e) {
-        return CashbackReportModel.fromJson(e);
-      }).toList());
-    }
-    print(dthCashbackReportList);
-    _isLoading = false;
-    notifyListeners();
-    return data;
-  }
-
-  List<Country> _countries = [];
-
-  List<Country> get countries => _countries;
-
-  Future<void> fetchCountries() async {
-    _isLoading = true;
-    notifyListeners();
-
-    final response = await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
-      'ReqType': 'ShowCountryList',
-    });
-    try {
-
-      var data = json.decode(response.data);
-
-      if (data['Status'] == 'True') {
-        _countries = (data['Data'] as List)
-            .map((item) => Country.fromJson(item))
-            .toList();
-      }
-    } catch (e) {
-      print('Error fetching countries: $e');
-    }
-
-    _isLoading = false;
-    notifyListeners();
-  }
 
 }
 

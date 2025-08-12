@@ -1,18 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
-
 import 'package:provider/provider.dart';
 import 'package:uonly_app/Screens/Recharge_Screen/recharge_detail_creen.dart';
-
-import '../../constants/assets.dart';
 import '../../models/user_model.dart';
 import '../../providers/loginProvider.dart';
-import '../../routing/app_pages.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/button.dart';
 import '../../widgets/error_utils.dart';
-import '../../widgets/textfield.dart';
 
 class RechargePlanScreen extends StatefulWidget {
   const RechargePlanScreen({super.key});
@@ -40,9 +33,9 @@ class _RechargePlanScreenState extends State<RechargePlanScreen>
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       var provider = context.read<ProviderScreen>();
-      await provider.getRechargeOperator('UA==');
-      await provider.getMobileCircle();
-      await provider.getDTHCashbackShow();
+      await provider.getRechargeOperator();
+      // await provider.getMobileCircle();
+      // await provider.getDTHCashbackShow();
 
       if (provider.operatorModel.isNotEmpty) {
         operator = provider.operatorModel.first;
@@ -83,7 +76,6 @@ class _RechargePlanScreenState extends State<RechargePlanScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                /// Dropdowns inside Card
                 Card(
                   elevation: 1,
                   shape: RoundedRectangleBorder(
@@ -104,6 +96,7 @@ class _RechargePlanScreenState extends State<RechargePlanScreen>
                             setState(() {});
                           },
                         ),
+
 
                         const SizedBox(height: 16),
 
@@ -142,28 +135,28 @@ class _RechargePlanScreenState extends State<RechargePlanScreen>
                   child: CustomElevatedBtn(
                     isBigSize: true,
                     onPressed:
-                    isLoading
-                        ? null
-                        :
-                        () async {
-                      if (!formKey.currentState!.validate()) return;
-                      setState(() {
-                        isLoading = true;
-                      });
-                      var res = await provider.getRechargePlan(
-                        number: number,
-                        operator: operator!.id.toString(),
-                        circle: circle!.circleCode.toString(),
-                      );
-                      setState(() {
-                        isLoading = false;
-                      });
-                      if (res['Status'] == 'False') {
-                        ErrorUtils.showSimpleInfoDialog(context,
-                            message: res['Message']);
-                      } else {
-                        setState(() {}); // just refresh view
-                      }
+                    // isLoading
+                    //     ? null
+                    //     :
+                       () async {
+                    //   if (!formKey.currentState!.validate()) return;
+                    //   setState(() {
+                    //     isLoading = true;
+                    //   });
+                    //   var res = await provider.getRechargePlan(
+                    //     number: number,
+                    //     operator: operator!.id.toString(),
+                    //     circle: circle!.circleCode.toString(),
+                    //   );
+                    //   setState(() {
+                    //     isLoading = false;
+                    //   });
+                    //   if (res['Status'] == 'False') {
+                    //     ErrorUtils.showSimpleInfoDialog(context,
+                    //         message: res['Message']);
+                    //   } else {
+                    //     setState(() {}); // just refresh view
+                    //   }
                     },
                     text: isLoading ? 'Please Wait...' :'Get Recharge Plan',
                   ),
@@ -320,33 +313,33 @@ class _RechargePlanScreenState extends State<RechargePlanScreen>
                                               alignment: Alignment.topRight,
                                               child:GestureDetector(
                                                 onTap: () async {
-                                                  try {
-                                                    amount = plan.rs;
-
-                                                    await provider.getCashbackDetails(
-                                                      amount: amount,
-                                                      operatorId: operator!.id.toString(),
-                                                      serviceId: 'P',
-                                                    );
-
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) => RechargeDetailScreen(
-                                                          operator: operator!,
-                                                          circle: circle!.circleName,
-                                                          amount: amount,
-                                                          mobile: number,
-                                                        ),
-                                                      ),
-                                                    );
-                                                  } catch (e, st) {
-                                                    print('Error navigating to RechargeDetailScreen: $e');
-                                                    print(st);
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      SnackBar(content: Text("Something went wrong: $e")),
-                                                    );
-                                                  }
+                                                  // try {
+                                                  //   amount = plan.rs;
+                                                  //
+                                                  //   await provider.getCashbackDetails(
+                                                  //     amount: amount,
+                                                  //     operatorId: operator!.id.toString(),
+                                                  //     serviceId: 'P',
+                                                  //   );
+                                                  //
+                                                  //   Navigator.push(
+                                                  //     context,
+                                                  //     MaterialPageRoute(
+                                                  //       builder: (context) => RechargeDetailScreen(
+                                                  //         operator: operator!,
+                                                  //         circle: circle!.circleName,
+                                                  //         amount: amount,
+                                                  //         mobile: number,
+                                                  //       ),
+                                                  //     ),
+                                                  //   );
+                                                  // } catch (e, st) {
+                                                  //   print('Error navigating to RechargeDetailScreen: $e');
+                                                  //   print(st);
+                                                  //   ScaffoldMessenger.of(context).showSnackBar(
+                                                  //     SnackBar(content: Text("Something went wrong: $e")),
+                                                  //   );
+                                                  // }
                                                 },
 
                                                 // borderRadius: BorderRadius.circular(7.0),
