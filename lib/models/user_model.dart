@@ -365,3 +365,32 @@ class WithdrawalImageModel {
     "DisplayForImage": displayForImage,
   };
 }
+
+
+class UserLoginDetailModel {
+  String passw;
+  int formNo;
+  String memberName;
+  String loginPin;
+
+  UserLoginDetailModel({
+    required this.passw,
+    required this.formNo,
+    required this.memberName,
+    required this.loginPin,
+  });
+
+  factory UserLoginDetailModel.fromJson(Map<String, dynamic> json) => UserLoginDetailModel(
+    passw: json["Passw"],
+    formNo: json["FormNo"],
+    memberName: json["MemberName"],
+    loginPin: json["LoginPin"],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "Passw": passw,
+    "FormNo": formNo,
+    "MemberName": memberName,
+    "LoginPin": loginPin,
+  };
+}

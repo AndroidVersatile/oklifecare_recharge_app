@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../models/user_model.dart'; // Assuming this is the correct path for OperatorModel
 import '../../providers/loginProvider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/button.dart';
@@ -14,10 +15,21 @@ class DthRechargeScreen extends StatefulWidget {
 }
 
 class _DthRechargeScreenState extends State<DthRechargeScreen> {
+  // Use a nullable type and initialize it to null
+  OperatorModel? operator;
+
   @override
   void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-      // await context.read<ProviderScreen>().getRechargeOperator('RA==');
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      var provider = context.read<ProviderScreen>();
+      await provider.getRechargeOperator();
+      // After getting the operators, set the first one as the default.
+      // This must be done inside `initState` and after the provider is updated.
+      if (provider.operatorModel.isNotEmpty) {
+        setState(() {
+          operator = provider.operatorModel.first;
+        });
+      }
     });
     super.initState();
   }
@@ -25,16 +37,28 @@ class _DthRechargeScreenState extends State<DthRechargeScreen> {
   bool isLoading = false;
   String amount = '';
   String number = '';
-  String operator = '';
+
   final formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
     var provider = Provider.of<ProviderScreen>(context);
 
+    // FIX: Show a loading spinner if the operator data is not yet available.
+    if (provider.operatorModel.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Recharge your DTH'),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Recharge your DTH'),
+        title: const Text('Recharge your DTH'),
       ),
       body: SingleChildScrollView(
         padding: AppTheme.screenPadding,
@@ -43,7 +67,6 @@ class _DthRechargeScreenState extends State<DthRechargeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Operator Dropdown inside the Card
               Card(
                 elevation: 1,
                 shape: RoundedRectangleBorder(
@@ -55,26 +78,25 @@ class _DthRechargeScreenState extends State<DthRechargeScreen> {
                     children: [
                       _buildDropdownField(
                         label: 'Operator',
-                        value: operator.isEmpty
-                            ? provider.operatorModel.first.operatorName
-                            : operator,
-                        items: provider.operatorModel
-                            .map((e) => e.operatorName)
-                            .toList(),
+                        // FIX: Use the operatorName from the operator model.
+                        // We can use the ! operator safely now because of the loading check above.
+                        value: operator!.operatorName,
+                        items: provider.operatorModel.map((e) => e.operatorName).toList(),
                         onChanged: (val) {
+                          // FIX: Find the operator object and update the state.
                           setState(() {
-                            operator = val!;
+                            operator = provider.operatorModel.firstWhere(
+                                  (e) => e.operatorName == val,
+                            );
                           });
                         },
                       ),
-                      const SizedBox(height: 16), // Space
-
-                      // Mobile Number Field
+                      const SizedBox(height: 16),
                       _buildTextField(
                         label: 'Enter DTH No.',
                         value: number,
                         keyboardType: TextInputType.number,
-                        maxLength: 10,
+                        maxLength: 10, // यह मान अब _buildTextField के अंदर के TextFormField तक पहुँच जाएगा
                         onChanged: (val) {
                           setState(() {
                             number = val;
@@ -87,9 +109,7 @@ class _DthRechargeScreenState extends State<DthRechargeScreen> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 16), // Space
-
-                      // Amount Field
+                      const SizedBox(height: 16),
                       _buildTextField(
                         label: 'Enter Amount',
                         value: amount,
@@ -111,8 +131,6 @@ class _DthRechargeScreenState extends State<DthRechargeScreen> {
                   ),
                 ),
               ),
-
-              // Proceed Button
               AppTheme.verticalSpacing(mul: 2),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 50),
@@ -121,97 +139,80 @@ class _DthRechargeScreenState extends State<DthRechargeScreen> {
                   onPressed: isLoading
                       ? null
                       : () async {
-                          if (!formKey.currentState!.validate()) return;
-                          setState(() {
-                            isLoading = true;
-                          });
+                    if (!formKey.currentState!.validate()) return;
+                    setState(() {
+                      isLoading = true;
+                    });
 
-                          // Get the operator code for the selected operator name
-                          final selectedOperator =
-                              provider.operatorModel.firstWhere(
-                            (e) => e.operatorName == operator,
-                            orElse: () => provider.operatorModel.first,
-                          );
+                    // FIX: Pass the operator code directly from the state variable.
+                    var res = await provider.dthRecharge(
+                      number: number,
+                      amount: amount,
+                      operator: operator!.operatorCode.toString(),
+                    );
 
-                          var res = await provider.dthRecharge(
-                            number: number,
-                            amount: amount,
-                            operator: selectedOperator.operatorCode
-                                .toString(), // Pass the operator code
-                          );
+                    setState(() {
+                      isLoading = false;
+                    });
 
-                          setState(() {
-                            isLoading = false;
-                          });
+                    bool isSuccess = res['success'] == true;
+                    String message = res['message'] ?? 'Something went wrong.';
 
-                          // FIX: Check for the 'success' key and get the 'message'
-                          bool isSuccess = res['success'] == true;
-                          String message =
-                              res['message'] ?? 'Something went wrong.';
-
-                          showDialog(
-                            context: context,
-                            builder: (context) => Dialog(
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20)),
-                              child: Container(
-                                constraints: BoxConstraints(
-                                  maxHeight: 250,
-                                ),
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 30,
-                                      backgroundColor: isSuccess
-                                          ? Colors.green.shade100
-                                          : Colors.red.shade100,
-                                      child: Icon(
-                                        isSuccess
-                                            ? Icons.check_circle
-                                            : Icons.error,
-                                        color: isSuccess
-                                            ? Colors.green
-                                            : Colors.red,
-                                        size: 40,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      isSuccess
-                                          ? 'Recharge Successful'
-                                          : 'Recharge Failed',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: isSuccess
-                                            ? Colors.green
-                                            : Colors.red,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      message, // Use the message from the API response
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 20),
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text(
-                                        'OK',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.blueAccent,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                    showDialog(
+                      context: context,
+                      builder: (context) => Dialog(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
+                        child: Container(
+                          constraints: const BoxConstraints(
+                            maxHeight: 260,
+                          ),
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircleAvatar(
+                                radius: 30,
+                                backgroundColor: isSuccess
+                                    ? Colors.green.shade100
+                                    : Colors.red.shade100,
+                                child: Icon(
+                                  isSuccess ? Icons.check_circle : Icons.error,
+                                  color: isSuccess ? Colors.green : Colors.red,
+                                  size: 40,
                                 ),
                               ),
-                            ),
-                          );
-                        },
+                              const SizedBox(height: 10),
+                              Text(
+                                isSuccess ? 'Recharge Successful' : 'Recharge Failed',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSuccess ? Colors.green : Colors.red,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                message,
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 20),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text(
+                                  'OK',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.blueAccent,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                   text: isLoading ? 'Please Wait...' : 'Proceed to Recharge',
                 ),
               )
@@ -222,6 +223,7 @@ class _DthRechargeScreenState extends State<DthRechargeScreen> {
     );
   }
 
+  // ... (Your helper methods `_buildDropdownField` and `_buildTextField` are fine as is)
   Widget _buildDropdownField({
     required String label,
     required String value,
@@ -249,7 +251,7 @@ class _DthRechargeScreenState extends State<DthRechargeScreen> {
           .map((item) => DropdownMenuItem(value: item, child: Text(item)))
           .toList(),
       onChanged: onChanged,
-      style: TextStyle(
+      style: const TextStyle(
         color: Colors.black,
         fontWeight: FontWeight.normal,
       ),
@@ -261,7 +263,7 @@ class _DthRechargeScreenState extends State<DthRechargeScreen> {
     String? hint,
     required String value,
     required TextInputType keyboardType,
-    required int maxLength,
+    required int maxLength, // maxLength को फ़ंक्शन में जोड़ें
     required Function(String) onChanged,
     String? Function(String?)? validator,
   }) {
@@ -269,6 +271,7 @@ class _DthRechargeScreenState extends State<DthRechargeScreen> {
       initialValue: value,
       decoration: InputDecoration(
         labelText: label,
+        counterText: '', // इससे 1/10 जैसा टेक्स्ट हट जाएगा
         labelStyle: TextStyle(fontWeight: FontWeight.normal),
         hintText: hint,
         border: OutlineInputBorder(
@@ -284,7 +287,7 @@ class _DthRechargeScreenState extends State<DthRechargeScreen> {
         ),
       ),
       keyboardType: keyboardType,
-      // maxLength: maxLength,
+      maxLength: maxLength, // यहां maxLength को पास करें
       onChanged: onChanged,
       validator: validator,
       style: TextStyle(

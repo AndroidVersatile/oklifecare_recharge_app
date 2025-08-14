@@ -12,13 +12,19 @@ import '../Screens/Login/sign_screen.dart';
 import '../Screens/Login/webview_screen_memberpanel.dart';
 import '../Screens/Profile_screen/upgradeid_screen.dart';
 import '../Screens/Profile_screen/wallet_statement.dart';
+import '../Screens/Recharge_Screen/bbps_recharge.dart';
 import '../Screens/Recharge_Screen/dth_recharge_screen.dart';
 import '../Screens/Recharge_Screen/electricity.dart';
+import '../Screens/Recharge_Screen/insuranse_screen.dart';
+import '../Screens/Recharge_Screen/money_transfer_screen.dart';
 import '../Screens/Recharge_Screen/recharge_detail_creen.dart';
 import '../Screens/Recharge_Screen/recharge_plan_screen.dart';
+import '../Screens/Recharge_Screen/refer_earn_screen.dart';
+import '../Screens/Recharge_Screen/reward_screen.dart';
 import '../Screens/Transction history/transaction_history.dart';
 import '../Screens/customer_selection.dart';
 import '../Screens/customnavbar_screen.dart';
+import '../Screens/notification_screen.dart';
 import '../Screens/receivemoney_screen.dart';
 import '../Screens/scantopay_screen.dart';
 import '../Screens/sendmoney_screen.dart';
@@ -110,16 +116,15 @@ GoRouter buildRouter(BuildContext context, String initialRoute) {
           return HomeScreen();
         },
       ),
-
       GoRoute(
         path:
-        '${AppPages.rechargePlanDetail}/:operator/:circle/:amount/:mobile',
+            '${AppPages.rechargePlanDetail}/:operator/:circle/:amount/:mobile',
         name: AppPages.rechargePlanDetail,
         builder: (context, state) {
           String model = state.pathParameters['operator'] ?? '';
 
           var operator =
-          OperatorModel.fromJson(ErrorUtils.convertBase64ToJson(model));
+              OperatorModel.fromJson(ErrorUtils.convertBase64ToJson(model));
           String circle = state.pathParameters['circle'] ?? '';
           String amount = state.pathParameters['amount'] ?? '';
           String mobile = state.pathParameters['mobile'] ?? '';
@@ -180,6 +185,48 @@ GoRouter buildRouter(BuildContext context, String initialRoute) {
         name: AppPages.electricityScreen,
         builder: (context, state) {
           return ElectricityScreen();
+        },
+      ),
+      GoRoute(
+        path: AppPages.notificationscreen,
+        name: AppPages.notificationscreen,
+        builder: (context, state) {
+          return NotificationScreen();
+        },
+      ),
+      GoRoute(
+        path: AppPages.referearnScreen,
+        name: AppPages.referearnScreen,
+        builder: (context, state) {
+          return ReferEarnScreen();
+        },
+      ),
+      GoRoute(
+        path: AppPages.rewardScreen,
+        name: AppPages.rewardScreen,
+        builder: (context, state) {
+          return RewardScreen();
+        },
+      ),
+      GoRoute(
+        path: AppPages.bbpsScreen,
+        name: AppPages.bbpsScreen,
+        builder: (context, state) {
+          return BbpsRecharge();
+        },
+      ),
+      GoRoute(
+        path: AppPages.insuranseScreen,
+        name: AppPages.insuranseScreen,
+        builder: (context, state) {
+          return InsuranseScreen();
+        },
+      ),
+      GoRoute(
+        path: AppPages.moneytransferScreen,
+        name: AppPages.moneytransferScreen,
+        builder: (context, state) {
+          return MoneyTransferScreen();
         },
       ),
       GoRoute(

@@ -1,19 +1,10 @@
-import 'dart:io';
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:intl/intl.dart';
-import 'package:open_file/open_file.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:permission_handler/permission_handler.dart';
-import 'package:printing/printing.dart';
-import 'package:provider/provider.dart';
-import 'package:uonly_app/Screens/Transction%20history/transaction_detailscreen.dart';
-import '../../models/wallet_statement_model.dart';
-import '../../providers/loginProvider.dart';
+import 'package:http/http.dart' as http; // http package को import करें
+import 'package:intl/intl.dart'; // DateFormat के लिए import करें
+import '../../constants/app_cache.dart';
+import '../../models/recharge_model.dart';
+
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -23,640 +14,230 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  List<WalletStatementModel> _filteredList = [];
-  bool _isDownloading = false;
+  List<TransactionStatusModel> _transactions = [];
+  bool _isLoading = true;
+  String _errorMessage = '';
 
   @override
   void initState() {
     super.initState();
-
-    final provider = context.read<ProviderScreen>();
-    provider.getWalletStatement().then((_) {
-      _filteredList = provider.walletList;
-    });
-
-    _searchController.addListener(_filterList);
+    _fetchTransactionHistory();
   }
 
-  void _filterList() {
-    final query = _searchController.text.toLowerCase();
-    final provider = context.read<ProviderScreen>();
-
+  Future<void> _fetchTransactionHistory() async {
     setState(() {
-      _filteredList = provider.walletList.where((txn) {
-        return txn.memFirstName.toLowerCase().contains(query) ||
-            txn.remark.toLowerCase().contains(query) ||
-            txn.tDate.toLowerCase().contains(query);
-      }).toList();
+      _isLoading = true;
+      _errorMessage = '';
     });
-  }
 
-  void _openFilter() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.black,
-      builder: (context) {
-        return FilterSheet();
-      },
-    );
-  }
+    const String apiUrl = 'https://oklifecare.com/Dashboard/API/RechargeAPI.aspx?reqtype=rechargereport';
+    final appCache = AppCache();
+    String? formNo = await appCache.getUserFormNo();
 
-  String formatTransactionDate(String rawDate) {
-    final timestampStr = rawDate.replaceAll(RegExp(r'[^\d]'), '');
-    final timestamp = int.tryParse(timestampStr);
-    if (timestamp == null) return '';
-
-    final dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-
-    if (difference.inHours < 12) {
-      if (difference.inMinutes < 1) {
-        return 'Just now';
-      } else if (difference.inMinutes < 60) {
-        return '${difference.inMinutes} minutes ago';
-      } else {
-        return '${difference.inHours} hours ago';
-      }
-    } else {
-      return DateFormat('dd MMM yyyy').format(dateTime);
+    if (formNo == null) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'User not logged in. Please log in again.';
+      });
+      return;
     }
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    final provider = Provider.of<ProviderScreen>(context);
-    return Scaffold(
-      backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        title: Text("Transaction History"),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        // foregroundColor: Colors.w,
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            SizedBox(height: 20,),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  InkWell(
-                    onTap: _openFilter,
-                    borderRadius: BorderRadius.circular(30),
-                    child: Container(
-                      padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(color: Colors.grey),
-                      ),
-                      child: Row(
-                        children: const [
-                          Icon(Icons.tune, color: Colors.grey),
-                          SizedBox(width: 8),
-                          Text("Filter",
-                              style: TextStyle(
-                                  color: Colors.grey,
-                                  fontWeight: FontWeight.w500)),
-                        ],
-                      ),
-                    ),
-                  ),
-                  InkWell(
-                    onTap: () async {
-                      setState(() {
-                        _isDownloading = true;
-                      });
-
-                      await _downloadStatementPDF(context, _filteredList);
-
-                      setState(() {
-                        _isDownloading = false;
-                      });
-                    },
-
-                    borderRadius: BorderRadius.circular(12),
-                    child: Card(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      color: const Color(0xFFE8F4FD),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 10),
-                        child: Row(
-                          children: [
-                            _isDownloading
-                                ? SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Color(0xFF018BD3),
-                              ),
-                            )
-                                : Icon(
-                              Icons.file_download_outlined,
-                              color: Color(0xFF018BD3),
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              _isDownloading
-                                  ? "Downloading..."
-                                  : "Download Statement",
-                              style: TextStyle(
-                                color: Color(0xFF018BD3),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: TextField(
-                controller: _searchController,
-                style: const TextStyle(color: Colors.black),
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
-
-                  hintText: "Search transactions",
-                  hintStyle: const TextStyle(
-                      color: Colors.grey, fontWeight: FontWeight.normal),
-                  contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: const BorderSide(color: Colors.grey),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: const BorderSide(color: Colors.grey),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: const BorderSide(color: Colors.grey),
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                itemCount: _filteredList.length,
-                separatorBuilder: (context, index) =>
-                const Divider(
-                  color: Colors.grey,
-                  thickness: 0.2,
-                ),
-                itemBuilder: (context, index) {
-                  final txn = _filteredList[index];
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                TransactionDetailScreen(
-                                    transaction: txn
-                                ),
-                          ),
-                        );
-                      });
-                    },
-                    child: ListTile(
-                      contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      leading: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8F4FD),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: const EdgeInsets.all(8),
-                        child:
-                        Transform.rotate(
-                          angle: txn.displaySts == "Debit" ? 0 : 3.14,
-                          // 0 for Debit, 180° for Credit
-                          child: Icon(
-                            Icons.arrow_outward,
-                            color: txn.displaySts == "Debit"
-                                ? Colors.red
-                                : Colors.green,
-                          ),
-                        ),
-                      ),
-                      title: Text(
-                        txn.displaySts == "Debit" ? "Paid To" : "Received From",
-                        style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            txn.memFirstName,
-                            style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500),
-                          ),
-                          SizedBox(height: 3,),
-                          Text(
-                            formatTransactionDate(txn.tDate),
-                            style:
-                            const TextStyle(color: Colors.grey, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            txn.displaySts == "Credit"
-                                ? "+₹${txn.credit}"
-                                : "-₹${txn.debit}",
-                            style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            txn.displaySts,
-                            style: TextStyle(color: Colors.grey, fontSize: 10),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _downloadStatementPDF(BuildContext context,
-      List<WalletStatementModel> transactions,) async {
     try {
-      // 1. Request storage permission
-      final status = await Permission.storage.request();
-      if (!status.isGranted) {
-        Fluttertoast.showToast(
-          msg: "Storage permission is required to download the statement.",
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-        );
-        return;
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {
+          'formno': formNo,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final dynamic responseData = json.decode(response.body);
+
+        if (responseData is Map<String, dynamic> && responseData['Data'] is List) {
+          final List<dynamic> jsonList = responseData['Data'];
+          setState(() {
+            _transactions = transactionStatusListFromJson(jsonList);
+          });
+        } else {
+          final String message = responseData['Message'] ?? 'Unexpected response format.';
+          setState(() {
+            _errorMessage = 'Failed to load transactions: $message';
+          });
+        }
+      } else {
+        setState(() {
+          _errorMessage = 'Failed to load transactions. Server responded with status: ${response.statusCode}';
+        });
       }
-
-      // 2. Create PDF
-      final pdf = pw.Document();
-
-      pdf.addPage(
-        pw.MultiPage(
-          pageFormat: PdfPageFormat.a4,
-          build: (context) =>
-          [
-            pw.Center(
-              child: pw.Text(
-                'Transaction Statement',
-                style: pw.TextStyle(
-                  fontSize: 20,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-            ),
-            pw.SizedBox(height: 16),
-            pw.Table.fromTextArray(
-              columnWidths: {
-                0: const pw.FlexColumnWidth(2), // Date
-                1: const pw.FlexColumnWidth(2.5), // Name
-                2: const pw.FlexColumnWidth(1), // Type
-                3: const pw.FlexColumnWidth(2), // Amount
-                4: const pw.FlexColumnWidth(4), // Remark
-              },
-              headers: ['Date', 'Name', 'Type', 'Amount', 'Remark'],
-              data: transactions.map((txn) {
-                final date = formatTransactionDate(txn.tDate);
-                final amount = txn.displaySts == "Credit"
-                    ? "+ ${txn.credit}"
-                    : "- ${txn.debit}";
-                return [
-                  date,
-                  txn.memFirstName,
-                  txn.displaySts,
-                  amount,
-                  txn.remark,
-                ];
-              }).toList(),
-              cellAlignment: pw.Alignment.centerLeft,
-              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-              headerDecoration: pw.BoxDecoration(color: PdfColors.grey300),
-              cellStyle: pw.TextStyle(fontSize: 10),
-            ),
-          ],
-        ),
-      );
-
-      final directory = await getExternalStorageDirectory();
-      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      final fileName = 'Transaction_Statement_$timestamp.pdf';
-      final filePath = '${directory!.path}/$fileName';
-
-      final file = File(filePath);
-      await file.writeAsBytes(await pdf.save());
-
-      // 4. Success message
-      Fluttertoast.showToast(
-        msg: "PDF saved to: $filePath",
-        backgroundColor: Colors.green,
-        textColor: Colors.white,
-      );
-
-      // 5. Open PDF (optional)
-      await OpenFile.open(filePath);
     } catch (e) {
-      Fluttertoast.showToast(
-        msg: "Error saving PDF: $e",
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      );
+      setState(() {
+        _errorMessage = 'Error fetching data: $e';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
-}
 
-
-
-
-class FilterSheet extends StatefulWidget {
-  @override
-  State<FilterSheet> createState() => _FilterSheetState();
-}
-
-class _FilterSheetState extends State<FilterSheet> {
-  int selectedTabIndex = 0;
-
-  List<String> months = [];
-  List<bool> selectedMonths = [];
-
-
-  List<bool> selectedCategories = [];
-
-  List<String> statuses = ["Success", "Failed", "Pending"];
-  List<bool> selectedStatuses = [];
-
-  List<String> paymentTypes = ["UPI", "Card", "Net Banking"];
-  List<bool> selectedPaymentTypes = [];
-
-  List<Map<String, dynamic>> tabs = [
-    {"label": "Months", "icon": Icons.calendar_month},
-    {"label": "Status", "icon": Icons.info_outline},
-    {"label": "Payment", "icon": Icons.payment},
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Generate months from Jan 2021 to now, and reverse for latest first
-    DateTime start = DateTime(2021, 1);
-    DateTime now = DateTime.now();
-
-    while (start.isBefore(DateTime(now.year, now.month + 1))) {
-      months.add("${_getMonthName(start.month)} ${start.year}");
-      start = DateTime(start.year, start.month + 1);
-    }
-
-    months = months.reversed.toList(); // 👈 Reverse months here
-
-    selectedMonths = List<bool>.filled(months.length, false);
-    selectedStatuses = List<bool>.filled(statuses.length, false);
-    selectedPaymentTypes = List<bool>.filled(paymentTypes.length, false);
-  }
-
-  String _getMonthName(int month) {
-    const List<String> monthNames = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    return monthNames[month - 1];
-  }
-
-  List<Widget> buildFilterOptions() {
-    List<String> options;
-    List<bool> selectedList;
-
-    switch (selectedTabIndex) {
-      case 0:
-        options = months;
-        selectedList = selectedMonths;
-        break;
-
-      case 1:
-        options = statuses;
-        selectedList = selectedStatuses;
-        break;
-      case 2:
-        options = paymentTypes;
-        selectedList = selectedPaymentTypes;
-        break;
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'success':
+        return Colors.green;
+      case 'failed':
+        return Colors.red;
+      case 'pending':
+        return Colors.orange;
       default:
-        options = [];
-        selectedList = [];
+        return Colors.grey;
     }
-
-    return List.generate(
-      options.length,
-          (index) => Column(
-        children: [
-          InkWell(
-            onTap: () {
-              setState(() {
-                selectedList[index] = !selectedList[index];
-              });
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    options[index],
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontSize: 15,
-                    ),
-                  ),
-                  Checkbox(
-                    value: selectedList[index],
-                    onChanged: (val) {
-                      setState(() {
-                        selectedList[index] = val!;
-                      });
-                    },
-                    activeColor: Colors.black,
-                    checkColor: Colors.white,
-                    fillColor: MaterialStateProperty.resolveWith<Color>((states) {
-                      if (states.contains(MaterialState.selected)) {
-                        return Colors.black;
-                      }
-                      return Colors.white;
-                    }),
-                    side: BorderSide(color: Colors.grey.shade400, width: 1),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Divider(color: Colors.grey.shade300, thickness: 0.7, height: 0),
-        ],
-      ),
-    );
   }
+
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.85,
-      child: Row(
-        children: [
-          // Left side tabs
-          Container(
-            width: 150,
-            color: Colors.white,
-            child: ListView.builder(
-              itemCount: tabs.length,
-              itemBuilder: (context, index) {
-                bool isSelected = selectedTabIndex == index;
-                return InkWell(
-                  onTap: () {
-                    setState(() {
-                      selectedTabIndex = index;
-                    });
-                  },
-                  child: Container(
-                    color: isSelected ? Colors.grey.shade200 : Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
-                    child: Center(
-                      child: Row(
-                        children: [
-                          Icon(
-                            tabs[index]['icon'],
-                            size: 20,
-                            color: isSelected ? Colors.black : Colors.grey,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              tabs[index]['label'],
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: isSelected ? Colors.black : Colors.grey[600],
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      // FIX: AppBar को `appBar:` नाम वाले आर्गुमेंट के अंदर रखें
+      appBar: AppBar(
+        title: const Text(
+          'Transaction History',
+          style: TextStyle(color: Colors.white),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF8E2DE2), // ऊपर का हल्का बैंगनी
+                Color(0xFF4A00E0), // नीचे का गहरा बैंगनी
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
           ),
-
-          // Right side filters
-          Expanded(
-            child: Container(
-              color: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
+      ),
+      // `body:` आर्गुमेंट पहले से ही सही जगह पर है
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0277BD))))
+          : _errorMessage.isNotEmpty
+          ? Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, color: Colors.red, size: 48),
+              const SizedBox(height: 10),
+              Text(
+                _errorMessage,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 16, color: Colors.red),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: _fetchTransactionHistory,
+                icon: const Icon(Icons.refresh, color: Colors.white),
+                label: const Text('Retry', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0277BD),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      )
+          : _transactions.isEmpty
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/no_Data.png',
+              height: 650,
+              width: 650,
+            ),
+          ],
+        ),
+      )
+          : ListView.builder(
+        padding: const EdgeInsets.all(8.0),
+        itemCount: _transactions.length,
+        itemBuilder: (context, index) {
+          final transaction = _transactions[index];
+          return Card(
+            margin: const EdgeInsets.symmetric(vertical: 6.0),
+            elevation: 3,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title and Close button
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Select Filters',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      Text(
+                        'Recharge No: ${transaction.rechargeNo}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Color(0xFF0277BD),
+                        ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Colors.black),
-                        onPressed: () {
-                          Navigator.pop(context); // 👈 Close sheet
-                        },
+                      Text(
+                        '₹${transaction.amount?.toStringAsFixed(2) ?? '0.00'}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: Color(0xFF2E7D32),
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  // Filter options
-                  Expanded(
-                    child: ListView(
-                      children: buildFilterOptions(),
-                    ),
+                  const Divider(height: 15, color: Colors.grey),
+                  _buildInfoRow('Status:', transaction.rechargeSts, _getStatusColor(transaction.rechargeSts)),
+                  _buildInfoRow('Operator:', transaction.operatorName),
+                  _buildInfoRow('Type:', transaction.operatorType),
+                  _buildInfoRow('Transaction ID:', transaction.trnId),
+                  _buildInfoRow('Operator Trn ID:', transaction.opTrnId),
+                  _buildInfoRow('Live Trn ID:', transaction.liveTrnId),
+                  _buildInfoRow(
+                    'Date:',
+                    DateFormat('dd MMM yyyy, hh:mm a').format(transaction.tDate),
                   ),
-                  // Apply button
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFE95168), Color(0xFFBA68C8)],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                      onPressed: () {
-                        // TODO: Handle filter apply logic
-                      },
-                      child: const Text(
-                        "APPLY",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                          color: Colors.white,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  )
                 ],
               ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+  Widget _buildInfoRow(String label, String value, [Color? valueColor]) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey[700]),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(color: valueColor ?? Colors.black87),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
             ),
           ),
         ],

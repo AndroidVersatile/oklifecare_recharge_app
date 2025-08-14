@@ -45,7 +45,8 @@ class ProviderScreen extends ChangeNotifier {
   update() {
     notifyListeners();
   }
-
+  String? _memberName;
+  String? get memberName => _memberName;
   String? _mobileNo;
   String? get mobileNo => _mobileNo;
   Future<Map<String, dynamic>> loginUser(String userId, String password) async {
@@ -65,7 +66,7 @@ class ProviderScreen extends ChangeNotifier {
       final response = await http.post(
         Uri.parse(baseUrl),
         headers: {
-          "Content-Type": "application/json", // raw JSON body ke liye
+          "Content-Type": "application/json",
         },
         body: json.encode(requestBody),
       );
@@ -73,12 +74,18 @@ class ProviderScreen extends ChangeNotifier {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         print("Login API Response: $data");
+
         if (data['Status'] == 'True') {
           final appCache = AppCache();
           userFormNo = data['Data'][0]['FormNo'].toString();
           await appCache.saveUserFormNo(userFormNo);
           String passFromApi = data['Data'][0]['Passw'].toString();
           await appCache.saveUserPass(passFromApi);
+
+          // FIX: MemberName को cache में save करें और provider variable को update करें
+          _memberName = data['Data'][0]['MemberName'].toString();
+          await appCache.saveMemberName(_memberName!); // MemberName को cache में save करें
+
         } else {
           _errorMessage = data["Message"] ?? "Login failed";
         }
@@ -99,7 +106,11 @@ class ProviderScreen extends ChangeNotifier {
       return {"Status": "False", "Message": _errorMessage};
     }
   }
-
+  Future<void> fetchUserData() async {
+    final appCache = AppCache();
+    _memberName = await appCache.getMemberName();
+    notifyListeners();
+  }
   Future<void> fetchUserdata() async {
     _isLoading = true;
     notifyListeners();
@@ -419,29 +430,30 @@ class ProviderScreen extends ChangeNotifier {
         data: requestBody,
       );
 
-      final dynamic responseData = response.data;
+      // Explicitly decode the response to ensure it's a Map
+      final responseData = json.decode(response.data.toString());
 
-      if (response.statusCode == 200 && responseData is Map<String, dynamic>) {
-        if (responseData['Status'] == 'True' &&
-            responseData['Data'] is List &&
-            responseData['Data'].isNotEmpty) {
-          final nestedData = responseData['Data'].first;
-          if (nestedData is Map<String, dynamic> &&
-              nestedData['status'] == 'SUCCESS') {
-            final liveTrnId = nestedData['LivetrnId'] ?? '';
-            final fullMessage = 'Recharge Successful\nLive Transaction ID: $liveTrnId';
-            return {'success': true, 'message': fullMessage};
-          }
+      // Check for success based on API's response
+      if (responseData['Status'] == 'True' && responseData['Data'] is List && responseData['Data'].isNotEmpty) {
+        final nestedData = responseData['Data'].first;
+        if (nestedData['status'] == 'SUCCESS') {
+          // final message = nestedData['message'] ?? 'Recharge successful!';
+          final liveTrnId = nestedData['LivetrnId'] ?? '';
+          final fullMessage = 'Recharge Successful\nLive Transaction ID: $liveTrnId';
+          return {'success': true, 'message': fullMessage};
         }
-        final errorMessage = responseData['Message'] ?? 'Recharge failed. Please try again.';
-        return {'success': false, 'message': errorMessage};
       }
 
-      return {'success': false, 'message': 'An unexpected error occurred.'};
+      // Default failure for any other case
+      final errorMessage = responseData['Message'] ?? 'Recharge failed. Please try again.';
+      return {'success': false, 'message': errorMessage};
     } catch (e) {
       return {'success': false, 'message': 'An unexpected error occurred.'};
     }
   }
+
+
+
   Future<void> getDTHCashbackShow() async {
     try {
       final response =

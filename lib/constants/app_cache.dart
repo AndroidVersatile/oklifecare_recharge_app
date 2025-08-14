@@ -17,7 +17,16 @@ class AppCache {
   factory AppCache() {
     return _appCache;
   }
+  static const _keyMemberName = 'memberName';
+  Future<void> saveMemberName(String memberName) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyMemberName, memberName);
+  }
 
+  Future<String?> getMemberName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyMemberName);
+  }
   Future<bool> checkInit() async {
     if (isInit) {
       return true;

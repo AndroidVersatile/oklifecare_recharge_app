@@ -1,19 +1,20 @@
-import 'package:flutter/material.dart'; // Material components के लिए import करें
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
-class ElectricityScreen extends StatefulWidget {
-  const ElectricityScreen({super.key});
+class MoneyTransferScreen extends StatefulWidget {
+  const MoneyTransferScreen({super.key});
 
   @override
-  State<ElectricityScreen> createState() => _ElectricityScreenState();
+  State<MoneyTransferScreen> createState() => _MoneyTransferScreenState();
 }
 
-class _ElectricityScreenState extends State<ElectricityScreen> {
+class _MoneyTransferScreenState extends State<MoneyTransferScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Electricity',
+          'Money Transfer',
           style: TextStyle(color: Colors.white),
         ),
         flexibleSpace: Container(

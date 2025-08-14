@@ -604,3 +604,65 @@ class BalanceModel {
     );
   }
 }
+class TransactionStatusModel {
+  String rechargeNo;
+  double amount;
+  String rechargeSts;
+  String trnId;
+  String opTrnId;
+  String liveTrnId;
+  DateTime tDate;
+  String operatorName;
+  String operatorDesc;
+  String operatorType;
+
+  TransactionStatusModel({
+    required this.rechargeNo,
+    required this.amount,
+    required this.rechargeSts,
+    required this.trnId,
+    required this.opTrnId,
+    required this.liveTrnId,
+    required this.tDate,
+    required this.operatorName,
+    required this.operatorDesc,
+    required this.operatorType,
+  });
+
+  factory TransactionStatusModel.fromJson(Map<String, dynamic> json) {
+    return TransactionStatusModel(
+      rechargeNo: json['RechargeNo'] ?? '',
+      amount: (json['Amount'] ?? 0).toDouble(),
+      rechargeSts: json['RechargeSts'] ?? '',
+      trnId: json['TrnId'] ?? '',
+      opTrnId: json['OpTrnId'] ?? '',
+      liveTrnId: json['LiveTrnId'] ?? '',
+      tDate: DateTime.fromMillisecondsSinceEpoch(
+        int.parse(json['TDate'].toString().replaceAll(RegExp(r'[^0-9]'), '')),
+      ),
+      operatorName: json['OperatorName'] ?? '',
+      operatorDesc: json['OperatorDesc'] ?? '',
+      operatorType: json['OperatorType'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'RechargeNo': rechargeNo,
+      'Amount': amount,
+      'RechargeSts': rechargeSts,
+      'TrnId': trnId,
+      'OpTrnId': opTrnId,
+      'LiveTrnId': liveTrnId,
+      'TDate': '/Date(${tDate.millisecondsSinceEpoch})/',
+      'OperatorName': operatorName,
+      'OperatorDesc': operatorDesc,
+      'OperatorType': operatorType,
+    };
+  }
+}
+
+// List parse helper
+List<TransactionStatusModel> transactionStatusListFromJson(List<dynamic> jsonList) {
+  return jsonList.map((e) => TransactionStatusModel.fromJson(e)).toList();
+}

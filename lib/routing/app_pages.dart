@@ -28,6 +28,12 @@ class AppPages {
   static const String depositRequestFormScreen = '/depositRequestFormScreen';
   static const String withdrawRequestFormScreen = '/withdrawRequestFormScreen';
   static const String electricityScreen = '/electricityScreen';
+  static const String notificationscreen = '/notificationscreen';
+  static const String referearnScreen = '/referearnScreen';
+  static const String rewardScreen = '/rewardScreen';
+  static const String moneytransferScreen = '/moneytransferScreen';
+  static const String insuranseScreen = '/insuranseScreen';
+  static const String bbpsScreen = '/bbpsScreen';
   static const String categoreyscreen = "/categoreyscreen";
   static const String searchproductscreen = "/searchproductscreen";
   static const String benefitscategoreyscreen = "/benefitscategoreyscreen";
