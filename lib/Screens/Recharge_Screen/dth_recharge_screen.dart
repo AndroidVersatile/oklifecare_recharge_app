@@ -21,6 +21,7 @@ class _DthRechargeScreenState extends State<DthRechargeScreen> {
     });
     super.initState();
   }
+
   bool isLoading = false;
   String amount = '';
   String number = '';
@@ -113,83 +114,108 @@ class _DthRechargeScreenState extends State<DthRechargeScreen> {
 
               // Proceed Button
               AppTheme.verticalSpacing(mul: 2),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 50),
-            child: CustomElevatedBtn(
-              isBigSize: true,
-              onPressed: isLoading ? null :
-                  () async {
-                if (!formKey.currentState!.validate()) return;
-                setState(() {
-                  isLoading = true;
-                });
-                // Call the API
-                var res = await provider.dthRecharge(
-                  number: number,
-                  amount: amount,
-                  operator: operator,
-                );
-                setState(() {
-                  isLoading = false;
-                });
-                // Determine success or failure based on your API response
-                bool isSuccess = res['Status'] == "Success"; // Or res['Code'] == "200"
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 50),
+                child: CustomElevatedBtn(
+                  isBigSize: true,
+                  onPressed: isLoading
+                      ? null
+                      : () async {
+                          if (!formKey.currentState!.validate()) return;
+                          setState(() {
+                            isLoading = true;
+                          });
 
-                // Show custom popup
-                showDialog(
-                  context: context,
-                  builder: (context) => Dialog(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    child: Container(
-                      constraints: BoxConstraints(
-                        maxHeight: 250, // Set the max height here
-                      ),
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CircleAvatar(
-                            radius: 30,
-                            backgroundColor: isSuccess ? Colors.green.shade100 : Colors.red.shade100,
-                            child: Icon(
-                              isSuccess ? Icons.check_circle : Icons.error,
-                              color: isSuccess ? Colors.green : Colors.red,
-                              size: 40,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            isSuccess ? 'Recharge Successful' : 'Recharge Failed',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: isSuccess ? Colors.green : Colors.red,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            res['Message'] ?? (isSuccess ? 'Recharge completed.' : 'Something went wrong.'),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 20),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text(
-                              'OK',
-                              style: TextStyle(fontSize: 15, color: Colors.blueAccent,),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-              text: isLoading ? 'Please Wait...' : 'Proceed to Recharge',
-            ),
-          )
+                          // Get the operator code for the selected operator name
+                          final selectedOperator =
+                              provider.operatorModel.firstWhere(
+                            (e) => e.operatorName == operator,
+                            orElse: () => provider.operatorModel.first,
+                          );
 
-          ],
+                          var res = await provider.dthRecharge(
+                            number: number,
+                            amount: amount,
+                            operator: selectedOperator.operatorCode
+                                .toString(), // Pass the operator code
+                          );
+
+                          setState(() {
+                            isLoading = false;
+                          });
+
+                          // FIX: Check for the 'success' key and get the 'message'
+                          bool isSuccess = res['success'] == true;
+                          String message =
+                              res['message'] ?? 'Something went wrong.';
+
+                          showDialog(
+                            context: context,
+                            builder: (context) => Dialog(
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20)),
+                              child: Container(
+                                constraints: BoxConstraints(
+                                  maxHeight: 250,
+                                ),
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 30,
+                                      backgroundColor: isSuccess
+                                          ? Colors.green.shade100
+                                          : Colors.red.shade100,
+                                      child: Icon(
+                                        isSuccess
+                                            ? Icons.check_circle
+                                            : Icons.error,
+                                        color: isSuccess
+                                            ? Colors.green
+                                            : Colors.red,
+                                        size: 40,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      isSuccess
+                                          ? 'Recharge Successful'
+                                          : 'Recharge Failed',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: isSuccess
+                                            ? Colors.green
+                                            : Colors.red,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      message, // Use the message from the API response
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 20),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text(
+                                        'OK',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          color: Colors.blueAccent,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                  text: isLoading ? 'Please Wait...' : 'Proceed to Recharge',
+                ),
+              )
+            ],
           ),
         ),
       ),
@@ -219,7 +245,9 @@ class _DthRechargeScreenState extends State<DthRechargeScreen> {
         ),
       ),
       value: value,
-      items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
+      items: items
+          .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+          .toList(),
       onChanged: onChanged,
       style: TextStyle(
         color: Colors.black,

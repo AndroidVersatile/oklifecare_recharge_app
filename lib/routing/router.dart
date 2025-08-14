@@ -1,4 +1,3 @@
-
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uonly_app/Screens/Login/login_screen.dart';
@@ -15,7 +14,7 @@ import '../Screens/Profile_screen/upgradeid_screen.dart';
 import '../Screens/Profile_screen/wallet_statement.dart';
 import '../Screens/Recharge_Screen/dth_recharge_screen.dart';
 import '../Screens/Recharge_Screen/electricity.dart';
-import '../Screens/Recharge_Screen/funds_recharge_screen.dart';
+import '../Screens/Recharge_Screen/recharge_detail_creen.dart';
 import '../Screens/Recharge_Screen/recharge_plan_screen.dart';
 import '../Screens/Transction history/transaction_history.dart';
 import '../Screens/customer_selection.dart';
@@ -24,6 +23,8 @@ import '../Screens/receivemoney_screen.dart';
 import '../Screens/scantopay_screen.dart';
 import '../Screens/sendmoney_screen.dart';
 import '../Screens/splash_screen.dart';
+import '../models/user_model.dart';
+import '../widgets/error_utils.dart';
 import 'app_pages.dart';
 
 GoRouter buildRouter(BuildContext context, String initialRoute) {
@@ -45,7 +46,6 @@ GoRouter buildRouter(BuildContext context, String initialRoute) {
           return CustomerSelectionScreen();
         },
       ),
-
       GoRoute(
         path: AppPages.login,
         name: AppPages.login,
@@ -60,7 +60,6 @@ GoRouter buildRouter(BuildContext context, String initialRoute) {
           return LoginMemberPanelScreen();
         },
       ),
-
       GoRoute(
         path: AppPages.webviewScreen,
         name: AppPages.webviewScreen,
@@ -69,7 +68,6 @@ GoRouter buildRouter(BuildContext context, String initialRoute) {
           return WebViewScreen(url: url); // <-- Pass the required url
         },
       ),
-
       GoRoute(
         path: AppPages.signscreen,
         name: AppPages.signscreen,
@@ -88,7 +86,7 @@ GoRouter buildRouter(BuildContext context, String initialRoute) {
         path: AppPages.sendmoneyscreen,
         name: AppPages.sendmoneyscreen,
         builder: (context, state) {
-          return  SendMoneyScreen();
+          return SendMoneyScreen();
         },
       ),
       GoRoute(
@@ -110,6 +108,29 @@ GoRouter buildRouter(BuildContext context, String initialRoute) {
         name: AppPages.homescreen,
         builder: (context, state) {
           return HomeScreen();
+        },
+      ),
+
+      GoRoute(
+        path:
+        '${AppPages.rechargePlanDetail}/:operator/:circle/:amount/:mobile',
+        name: AppPages.rechargePlanDetail,
+        builder: (context, state) {
+          String model = state.pathParameters['operator'] ?? '';
+
+          var operator =
+          OperatorModel.fromJson(ErrorUtils.convertBase64ToJson(model));
+          String circle = state.pathParameters['circle'] ?? '';
+          String amount = state.pathParameters['amount'] ?? '';
+          String mobile = state.pathParameters['mobile'] ?? '';
+
+          // Corrected the widget name from RechargePlanDetailScreen to RechargeDetailScreen
+          return RechargeDetailScreen(
+            operator: operator,
+            circle: circle,
+            amount: amount,
+            mobile: mobile,
+          );
         },
       ),
       GoRoute(
@@ -140,7 +161,6 @@ GoRouter buildRouter(BuildContext context, String initialRoute) {
           return KycUpdateScreen();
         },
       ),
-
       GoRoute(
         path: AppPages.rechargePlan,
         name: AppPages.rechargePlan,
@@ -181,27 +201,6 @@ GoRouter buildRouter(BuildContext context, String initialRoute) {
         name: AppPages.addbankscreen,
         builder: (context, state) {
           return AddBankDetailScreen();
-        },
-      ),
-      GoRoute(
-        path: AppPages.fund,
-        name: AppPages.fund,
-        builder: (context, state) {
-          return FundsRechargeScreen();
-        },
-      ),
-      GoRoute(
-        path: AppPages.depositRequestFormScreen,
-        name: AppPages.depositRequestFormScreen,
-        builder: (context, state) {
-          return DepositRequestFormScreen();
-        },
-      ),
-      GoRoute(
-        path: AppPages.withdrawRequestFormScreen,
-        name: AppPages.withdrawRequestFormScreen,
-        builder: (context, state) {
-          return WithdrawRequestFormScreen();
         },
       ),
     ],

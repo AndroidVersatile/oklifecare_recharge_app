@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:uonly_app/Screens/Recharge_Screen/recharge_detail_creen.dart';
 import '../../models/user_model.dart';
 import '../../providers/loginProvider.dart';
+import '../../routing/app_pages.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/button.dart';
 import '../../widgets/error_utils.dart';
@@ -34,18 +36,12 @@ class _RechargePlanScreenState extends State<RechargePlanScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       var provider = context.read<ProviderScreen>();
       await provider.getRechargeOperator();
-      // await provider.getMobileCircle();
-      // await provider.getDTHCashbackShow();
-
+      await provider.getMobileCircle();
       if (provider.operatorModel.isNotEmpty) {
         operator = provider.operatorModel.first;
       }
       if (provider.circleList.isNotEmpty) {
         circle = provider.circleList.first;
-      }
-      if (provider.rechargeTabList.isNotEmpty) {
-        tabCount = provider.rechargeTabList.length;
-        _initializeTabController(tabCount);
       }
       setState(() {});
     });
@@ -57,12 +53,17 @@ class _RechargePlanScreenState extends State<RechargePlanScreen>
   @override
   Widget build(BuildContext context) {
     var provider = Provider.of<ProviderScreen>(context);
-    var plans = provider.filteredRechargePlanList;
+    // No need for a separate `plans` variable here, as we'll use the provider directly
 
     if (tabCount != provider.rechargeTabList.length) {
       tabCount = provider.rechargeTabList.length;
-      _initializeTabController(tabCount);
+      // Only initialize the tab controller if there are tabs
+      if (tabCount > 0) {
+        _initializeTabController(tabCount);
+      }
     }
+
+    // The `DefaultTabController` and `Scaffold` remain unchanged
     return DefaultTabController(
       length: provider.rechargeTabList.length,
       child: Scaffold(
@@ -96,18 +97,13 @@ class _RechargePlanScreenState extends State<RechargePlanScreen>
                             setState(() {});
                           },
                         ),
-
-
                         const SizedBox(height: 16),
-
                         _buildDropdownField(
                           label: 'Circle',
-                          value: circle?.circleName,
-                          items: provider.circleList.map((e) => e.circleName).toList(),
+                          value: circle?.stateName,
+                          items: provider.circleList.map((e) => e.stateName).toList(),
                           onChanged: (val) {
-                            circle = provider.circleList.firstWhere(
-                                  (e) => e.circleName == val,
-                            );
+                            circle = provider.circleList.firstWhere((e) => e.stateName == val);
                             setState(() {});
                           },
                         ),
@@ -134,49 +130,58 @@ class _RechargePlanScreenState extends State<RechargePlanScreen>
                   padding: const EdgeInsets.symmetric(horizontal: 50),
                   child: CustomElevatedBtn(
                     isBigSize: true,
-                    onPressed:
-                    // isLoading
-                    //     ? null
-                    //     :
-                       () async {
-                    //   if (!formKey.currentState!.validate()) return;
-                    //   setState(() {
-                    //     isLoading = true;
-                    //   });
-                    //   var res = await provider.getRechargePlan(
-                    //     number: number,
-                    //     operator: operator!.id.toString(),
-                    //     circle: circle!.circleCode.toString(),
-                    //   );
-                    //   setState(() {
-                    //     isLoading = false;
-                    //   });
-                    //   if (res['Status'] == 'False') {
-                    //     ErrorUtils.showSimpleInfoDialog(context,
-                    //         message: res['Message']);
-                    //   } else {
-                    //     setState(() {}); // just refresh view
-                    //   }
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                      if (!formKey.currentState!.validate()) return;
+
+                      // Check if operator and circle are selected
+                      if (operator == null || circle == null) {
+                        ErrorUtils.showSimpleInfoDialog(context, message: 'Please select an operator and a circle.');
+                        return;
+                      }
+
+                      setState(() {
+                        isLoading = true;
+                      });
+
+                      // Call the API with the correct parameters
+                      var res = await provider.getRechargePlan(
+                        number: number,
+                        operatorId: operator!.operatorCode.toString(),
+                        stateId: circle!.stateId.toString(),
+                      );
+
+                      setState(() {
+                        isLoading = false;
+                      });
+
+                      if (res != null && res['status'] == 'false') {
+                        ErrorUtils.showSimpleInfoDialog(context, message: res['message']);
+                      } else {
+                        // The provider already calls notifyListeners, so this setState is not strictly needed but can be a good habit.
+                        setState(() {});
+                      }
                     },
-                    text: isLoading ? 'Please Wait...' :'Get Recharge Plan',
+                    text: isLoading ? 'Please Wait...' : 'Get Recharge Plan',
                   ),
                 ),
                 AppTheme.verticalSpacing(mul: 2),
-                if (provider.rechargeTabList.isNotEmpty)
+                // Show the search and tab bar only when data is available
+                if (provider.rechargeTabList.isNotEmpty) ...[
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: TextField(
-
                       controller: searchController,
                       decoration: InputDecoration(
                         hintText: 'Search Plans...',
                         filled: true,
                         fillColor: Colors.white,
-                        prefixIcon: Icon(Icons.search),
+                        prefixIcon: const Icon(Icons.search),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(25),
-                          borderSide: const BorderSide(color: Colors.grey), // default border
+                          borderSide: const BorderSide(color: Colors.grey),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(25),
@@ -194,190 +199,219 @@ class _RechargePlanScreenState extends State<RechargePlanScreen>
                       },
                     ),
                   ),
-
-                // AppTheme.verticalSpacing(mul: 1),
-                if (provider.rechargeTabList.isNotEmpty)
                   TabBar(
                     controller: controller,
                     isScrollable: true,
-                    dividerColor:Colors.grey,
+                    dividerColor: Colors.grey,
                     dividerHeight: 0.1,
                     labelColor: Colors.grey.shade600,
                     unselectedLabelColor: Colors.black,
                     onTap: (index) {
-                      provider.filterRechargePlanList(
-                          provider.rechargeTabList[index]);
+                      provider.filterRechargePlanList(provider.rechargeTabList[index]);
                       setState(() {});
                     },
-                    tabs: provider.rechargeTabList
-                        .map((tab) => Tab(text: tab.toUpperCase()))
-                        .toList(),
+                    tabs: provider.rechargeTabList.map((tab) => Tab(text: tab.toUpperCase())).toList(),
                   ),
-                AppTheme.verticalSpacing(mul: 2),
-                if (provider.rechargeTabList.isNotEmpty)
-                  Container(
-                    height: 250.0 * provider.filteredRechargePlanList.length,
+                  AppTheme.verticalSpacing(mul: 2),
+                  // Using a flexible layout with Expanded and ListView.builder
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.7, // Adjust height as needed
                     child: TabBarView(
                       controller: controller,
                       children: provider.rechargeTabList.map((tab) {
                         final plans = provider.filteredRechargePlanList
                             .where((plan) =>
-                        plan.desc
-                            .toLowerCase()
-                            .contains(searchQuery) ||
-                            plan.rs
-                                .toLowerCase()
-                                .contains(searchQuery))
+                        (plan.desc.toLowerCase().contains(searchQuery) ||
+                            plan.rs.toString().toLowerCase().contains(searchQuery)))
                             .toList();
-                        return Column(  // Using Column to stack widgets
-                          children: [
-                            Expanded(  // Wrap ListView.builder in Expanded to take remaining space
-                              child: ListView.builder(
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: plans.length,
-                                itemBuilder: (_, index) {
-                                  final plan = plans[index];
-                                  return Container(
-                                    margin: const EdgeInsets.symmetric(vertical: 8),
-                                    padding: AppTheme.screenPadding,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(AppTheme.radius),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          blurRadius: 4,
-                                          color: Colors.black12,
-                                        )
-                                      ],
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              '\u{20B9}${plan.rs}',
-                                              style: context.textTheme.titleMedium?.copyWith(
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            Column(
-                                              children: [
-                                                Text(
-                                                  plan.validity,
-                                                  style: context.textTheme.labelMedium?.copyWith(
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                const Text(
-                                                  'Validity',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.grey,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                        AppTheme.verticalSpacing(),
-                                        Text(
-                                          plan.desc,
-                                          style: TextStyle(
-                                            color: Colors.grey.shade700,
-                                          ),
-                                        ),
 
-                                        AppTheme.verticalSpacing(),
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Padding(
-                                              padding: const EdgeInsets.only(top: 8.0),
-                                              child: Row(
-                                                children: [
-                                                  Icon(Icons.card_giftcard, color: Colors.green, size: 18),
-                                                  SizedBox(width: 4),
-                                                  Text(
-                                                    'Cashback: ₹2.50',
-                                                    style: TextStyle(
-                                                      color: Colors.green,
-                                                      fontWeight: FontWeight.bold,
-                                                    ),
+                        return ListView.builder(
+                          itemCount: plans.length,
+                          itemBuilder: (_, index) {
+                            final plan = plans[index];
+                            return Container(
+                              margin: const EdgeInsets.symmetric(vertical: 8),
+                              padding: AppTheme.screenPadding,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(AppTheme.radius),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    blurRadius: 4,
+                                    color: Colors.black12,
+                                  )
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        '\u{20B9}${plan.rs}',
+                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Column(
+                                        children: [
+                                          Text(
+                                            // Corrected to handle nullable `validity`
+                                            plan.validity?.toString() ?? 'N/A',
+                                            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const Text(
+                                            'Validity',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  AppTheme.verticalSpacing(),
+                                  // ... (The code before the description section)
+
+// This is the updated section to display the description as a numbered list
+                                  // ... (The code before the description section)
+
+// This is the updated section to display the description as a numbered list
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      ...plan.desc
+                                          .split('.')
+                                          .where((s) => s.isNotEmpty)
+                                          .toList() // Convert the Iterable to a List
+                                          .asMap()
+                                          .entries
+                                          .map((entry) {
+                                        final int index = entry.key;
+                                        final String point = entry.value;
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 2.0),
+                                          child: Row(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                '${index + 1}.', // Display the number and a period (e.g., "1.", "2.")
+                                                style: TextStyle(
+                                                  color: Colors.grey.shade700,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  point.trim(), // Trim removes extra spaces
+                                                  style: TextStyle(
+                                                    color: Colors.grey.shade700,
                                                   ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ],
+                                  ),
+
+// ... (The code after the description section)
+
+// ... (The code after the description section)
+                                  AppTheme.verticalSpacing(),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 8.0),
+                                        // child: Row(
+                                        //   children: const [
+                                        //     Icon(Icons.card_giftcard, color: Colors.green, size: 18),
+                                        //     SizedBox(width: 4),
+                                        //     Text(
+                                        //       'Cashback: ₹2.50',
+                                        //       style: TextStyle(
+                                        //         color: Colors.green,
+                                        //         fontWeight: FontWeight.bold,
+                                        //       ),
+                                        //     ),
+                                        //   ],
+                                        // ),
+                                      ),
+                                      Align(
+                                        alignment: Alignment.topRight,
+                                        child:GestureDetector(
+                                          onTap: () async {
+                                            try {
+                                              amount = plan.rs.toString();
+
+                                              // await provider.getCashbackDetails(
+                                              //   amount: amount,
+                                              //   operatorId: operator!.operatorCode.toString(),
+                                              //   serviceId: 'P',
+                                              // );
+
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => RechargeDetailScreen(
+                                                    operator: operator!,
+                                                    circle: circle!.stateName,
+                                                    amount: amount,
+                                                    mobile: number,
+                                                  ),
+                                                ),
+                                              );
+                                            } catch (e, st) {
+                                              print('Error navigating to RechargeDetailScreen: $e');
+                                              print(st);
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text("Something went wrong: $e")),
+                                              );
+                                            }
+                                          },
+
+                                          // borderRadius: BorderRadius.circular(7.0),
+                                          child: Container(
+                                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                colors: [
+                                                  Color(0xFFE95168), // Pink
+                                                  Color(0xFFBA68C8), // Purple
                                                 ],
                                               ),
+                                              borderRadius: BorderRadius.circular(7.0),
                                             ),
-                                            Align(
-                                              alignment: Alignment.topRight,
-                                              child:GestureDetector(
-                                                onTap: () async {
-                                                  // try {
-                                                  //   amount = plan.rs;
-                                                  //
-                                                  //   await provider.getCashbackDetails(
-                                                  //     amount: amount,
-                                                  //     operatorId: operator!.id.toString(),
-                                                  //     serviceId: 'P',
-                                                  //   );
-                                                  //
-                                                  //   Navigator.push(
-                                                  //     context,
-                                                  //     MaterialPageRoute(
-                                                  //       builder: (context) => RechargeDetailScreen(
-                                                  //         operator: operator!,
-                                                  //         circle: circle!.circleName,
-                                                  //         amount: amount,
-                                                  //         mobile: number,
-                                                  //       ),
-                                                  //     ),
-                                                  //   );
-                                                  // } catch (e, st) {
-                                                  //   print('Error navigating to RechargeDetailScreen: $e');
-                                                  //   print(st);
-                                                  //   ScaffoldMessenger.of(context).showSnackBar(
-                                                  //     SnackBar(content: Text("Something went wrong: $e")),
-                                                  //   );
-                                                  // }
-                                                },
-
-                                                // borderRadius: BorderRadius.circular(7.0),
-                                                child: Container(
-                                                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                                  decoration: BoxDecoration(
-                                                    gradient: LinearGradient(
-                                                      colors: [
-                                                        Color(0xFFE95168), // Pink
-                                                        Color(0xFFBA68C8), // Purple
-                                                      ],
-                                                    ),
-                                                    borderRadius: BorderRadius.circular(7.0),
-                                                  ),
-                                                  child: Text(
-                                                    'Recharge',
-                                                    style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontWeight: FontWeight.w500,
-                                                      fontSize: 14,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
+                                            child: Text(
+                                              'Recharge',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 14,
                                             ),
-                                          ],
+                                          ),
                                         ),
-                                      ],
-                                    ),
-                                  );
-                                },
+                                      ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
+                            );
+                          },
                         );
                       }).toList(),
+
                     ),
-                  )
+                  ),
+                  AppTheme.verticalSpacing(mul: 3),
+                ]
               ],
             ),
           ),
@@ -385,6 +419,8 @@ class _RechargePlanScreenState extends State<RechargePlanScreen>
       ),
     );
   }
+
+// Helper methods like `_buildDropdownField` and `_buildTextField` remain the same.
   Widget _buildDropdownField({
     required String label,
     required String? value,

@@ -37,37 +37,77 @@ class CashBackShowModel {
   }
 }
 
-class RechargePlanModel {
-  String type;
-  String rs;
-  String validity;
-  String desc;
-  int rdataId;
 
-  RechargePlanModel({
-    required this.type,
+
+class RechargePlanModel {
+  final int rs;
+  final String desc;
+  final int? validity;
+  final String lastUpdate;
+  final double? data;
+  final double? talktime;
+  final String type; // Added to store the plan category
+
+  const RechargePlanModel({
     required this.rs,
-    required this.validity,
     required this.desc,
-    required this.rdataId,
+    this.validity,
+    required this.lastUpdate,
+    this.data,
+    this.talktime,
+    required this.type,
   });
 
-  factory RechargePlanModel.fromJson(Map<String, dynamic> json) =>
-      RechargePlanModel(
-        type: json["Type"],
-        rs: json["rs"],
-        validity: json["validity"],
-        desc: json["desc"],
-        rdataId: json["RDATA_Id"],
-      );
+  factory RechargePlanModel.fromJson(Map<String, dynamic> json, String type) {
+    return RechargePlanModel(
+      rs: json["rs"] as int,
+      desc: json["desc"] as String,
+      validity: json["validity"] as int?,
+      lastUpdate: json["last_update"] as String,
+      data: (json["data"] as num?)?.toDouble(),
+      talktime: (json["talktime"] as num?)?.toDouble(),
+      type: type, // Pass the category as the type
+    );
+  }
+}
 
-  Map<String, dynamic> toJson() => {
-    "Type": type,
-    "rs": rs,
-    "validity": validity,
-    "desc": desc,
-    "RDATA_Id": rdataId,
-  };
+
+class RechargeResponse {
+  final int status;
+  final bool success;
+  final String message;
+  final List<RechargePlanModel> allPlans;
+
+  const RechargeResponse({
+    required this.status,
+    required this.success,
+    required this.message,
+    required this.allPlans,
+  });
+
+  factory RechargeResponse.fromJson(Map<String, dynamic> json) {
+    final Map<String, dynamic> plansData = json['data']['plans'];
+    final List<RechargePlanModel> plans = [];
+
+    // Loop through each category (e.g., 'Popular', 'Top Up')
+    plansData.forEach((category, planList) {
+      if (planList is List) {
+        // Loop through the list of plans in each category
+        for (var planJson in planList) {
+          if (planJson is Map<String, dynamic>) {
+            plans.add(RechargePlanModel.fromJson(planJson, category));
+          }
+        }
+      }
+    });
+
+    return RechargeResponse(
+      status: json['status'] as int,
+      success: json['success'] as bool,
+      message: json['message'] as String,
+      allPlans: plans,
+    );
+  }
 }
 
 class DepositDetailModel {

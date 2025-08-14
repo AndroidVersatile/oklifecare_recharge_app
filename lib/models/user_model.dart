@@ -259,22 +259,22 @@ class OperatorModel {
 }
 
 class CircleModel {
-  int circleCode;
-  String circleName;
+  int stateId;
+  String stateName;
 
   CircleModel({
-    required this.circleCode,
-    required this.circleName,
+    required this.stateId,
+    required this.stateName,
   });
 
   factory CircleModel.fromJson(Map<String, dynamic> json) => CircleModel(
-    circleCode: json["CircleCode"],
-    circleName: json["CircleName"],
+    stateId: json["stateId"],
+    stateName: json["stateName"],
   );
 
   Map<String, dynamic> toJson() => {
-    "CircleCode": circleCode,
-    "CircleName": circleName,
+    "stateId": stateId,
+    "stateName": stateName,
   };
 }
 

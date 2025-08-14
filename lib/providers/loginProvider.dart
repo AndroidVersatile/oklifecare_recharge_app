@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../Screens/services/app_services.dart';
 import '../constants/api_urls.dart';
 import '../constants/app_cache.dart';
@@ -32,17 +31,21 @@ class ProviderScreen extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   List<WalletStatementModel> walletList = List.empty(growable: true);
   List<OperatorModel> operatorModel = [];
+  // List<CircleModel> circleList = [];
   List<CircleModel> circleList = List.empty(growable: true);
   List<CashBackShowModel> cashBackShowModel = List.empty(growable: true);
-  List<RechargePlanModel> rechargePlanList = List.empty(growable: true);
-  List<RechargePlanModel> filteredRechargePlanList = List.empty(growable: true);
+
+  List<RechargePlanModel> rechargePlanList = [];
+  List<String> rechargeTabList = [];
+  List<RechargePlanModel> filteredRechargePlanList = [];
   List<SelectBankModel> selectBankModel = List.empty(growable: true);
   List<AddBankDetailshowDataModel> addBankDetailshowDataModel =
-  List.empty(growable: true);
+      List.empty(growable: true);
   List<CashbackReportModel> dthCashbackReportList = List.empty(growable: true);
   update() {
     notifyListeners();
   }
+
   String? _mobileNo;
   String? get mobileNo => _mobileNo;
   Future<Map<String, dynamic>> loginUser(String userId, String password) async {
@@ -127,6 +130,7 @@ class ProviderScreen extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
+
   Future<void> fetchWalletBalance() async {
     try {
       final String baseUrl =
@@ -139,9 +143,7 @@ class ProviderScreen extends ChangeNotifier {
         return;
       }
 
-      final Map<String, String> requestBody = {
-        "formno": formNo
-      };
+      final Map<String, String> requestBody = {"formno": formNo};
 
       final response = await http.post(
         Uri.parse(baseUrl),
@@ -157,8 +159,8 @@ class ProviderScreen extends ChangeNotifier {
 
         if (data['Status'] == 'True' && data['Data'] != null) {
           currentWalletBalance = double.tryParse(
-            data['Data'][0]['Balance'].toString(),
-          ) ??
+                data['Data'][0]['Balance'].toString(),
+              ) ??
               0.0;
           _walletBalance = BalanceModel(balance: currentWalletBalance);
 
@@ -171,6 +173,7 @@ class ProviderScreen extends ChangeNotifier {
       print("Error fetching wallet balance: $e");
     }
   }
+
   Future<dynamic> getRechargeOperator() async {
     _isLoading = true;
     notifyListeners();
@@ -178,9 +181,7 @@ class ProviderScreen extends ChangeNotifier {
     try {
       final response = await _apiClient.dio.post(
         "${ApiUrls.baseUrl}?reqtype=opcode",
-        data: {
-          "services": "P"
-        },
+        data: {"services": "P"},
         options: Options(
           headers: {
             "Content-Type": "application/json",
@@ -192,7 +193,9 @@ class ProviderScreen extends ChangeNotifier {
       print("Raw Response: ${response.data}");
 
       if (response.statusCode == 200 && response.data != null) {
-        var data = response.data is String ? json.decode(response.data) : response.data;
+        var data = response.data is String
+            ? json.decode(response.data)
+            : response.data;
 
         if (data['Status'] == 'True' || data['status'] == 200) {
           operatorModel = List<OperatorModel>.from(
@@ -218,7 +221,8 @@ class ProviderScreen extends ChangeNotifier {
     notifyListeners();
 
     var formno = await cache.getUserFormNo();
-    final response = await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
+    final response =
+        await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
       'ReqType': 'WalletTransactionDetail',
       'FormNo': formno,
     });
@@ -244,17 +248,18 @@ class ProviderScreen extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      final formNo = await AppCache().getUserFormNo(); // Assuming this method exists
+      final formNo =
+          await AppCache().getUserFormNo(); // Assuming this method exists
       final encodedType = base64Encode(utf8.encode(type));
       final encodedOldPassword = base64Encode(utf8.encode(oldPassword));
       final encodedNewPassword = base64Encode(utf8.encode(newPassword));
       final url = Uri.parse(
         'http://uonely.versatileitsolution.com/UserPanel/API/App_Api.aspx'
-            '?ReqType=ChangePassword'
-            '&Type=$encodedType'
-            '&FormNo=$formNo'
-            '&OldPassword=$encodedOldPassword'
-            '&NewPassword=$encodedNewPassword',
+        '?ReqType=ChangePassword'
+        '&Type=$encodedType'
+        '&FormNo=$formNo'
+        '&OldPassword=$encodedOldPassword'
+        '&NewPassword=$encodedNewPassword',
       );
       final response = await http.get(url);
       print("Request URL: $url");
@@ -303,80 +308,144 @@ class ProviderScreen extends ChangeNotifier {
   //   return data;
   // }
 
-
   Future<dynamic> getMobileCircle() async {
-   _isLoading = true;
+    _isLoading = true;
     notifyListeners();
-    final response =
-    await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
-      'ReqType': 'PrePaidRechargeFillCircle',
-      'OperatorType': 'Qw==',
-    });
-    var data = json.decode(response.data);
-    if (response.statusCode == 200) {
-      circleList = await List.castFrom(data['Data'].map((e) {
-        return CircleModel.fromJson(e);
-      }).toList());
-      print(circleList);
+
+    try {
+      final response = await _apiClient.dio.get(
+        'https://verifyapi.in/api/getStateList?api-key=1877e9a140cb998f1c692adae4a1a76079a935fcc98d9ba44f',
+      );
+
+      print('API Response Status: ${response.statusCode}');
+      print('API Response Data: ${response.data}');
+
+      // Change the condition to check for the 'success' key
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        var data = response.data['data'];
+        circleList = List<CircleModel>.from(data.map((e) {
+          return CircleModel.fromJson(e);
+        }));
+
+        print('Fetched Circle List: $circleList');
+        print('API Second Response Status: ${response.statusCode}');
+        print('API  Second Response Data: ${response.data}');
+
+      }
+    } catch (e) {
+      print('Error fetching mobile circles: $e');
     }
+
     _isLoading = false;
     notifyListeners();
-    return data;
+    return null;
   }
-
 
   Future<Map<String, dynamic>> prepaidRecharge({
     required String number,
     required String amount,
     required String operator,
-  }) async {
-    _isLoading = true;
-    notifyListeners();
 
+  }) async {
     try {
-      var formno = await cache.getUserFormNo();
-      var formData = {
-        'ReqType': 'PrePaidRecharge',
-        'FormNo': formno,
-        'RechargeNo': base64.encode(utf8.encode(number)),
-        'amount': base64.encode(utf8.encode(amount)),
-        'OperatorType': base64.encode(utf8.encode(operator)),
+      // Check if the user is logged in
+      final appCache = AppCache();
+      String? formNo = await appCache.getUserFormNo();
+      if (formNo == null) {
+        return {'success': false, 'message': 'User not logged in.'};
+      }
+
+      // Prepare the request body
+      var requestBody = {
+        'formno': formNo,
+        'services': "P",
+        'rechargeno': number,
+        'amount': amount,
+        'opcode': operator,
       };
 
-      final response = await _apiClient.dio.get(
+      // Make the API call
+      final response = await _apiClient.dio.post(
         ApiUrls.baseUrl,
-        queryParameters: formData,
+        queryParameters: {'reqtype': 'recharge'},
+        data: requestBody,
       );
 
-      var data = json.decode(response.data);
+      // Explicitly decode the response to ensure it's a Map
+      final responseData = json.decode(response.data.toString());
 
-      if (response.statusCode == 200 && data['Message'] == 'Success') {
-        return {
-          'success': true,
-          'message': 'Recharge of ₹$amount for $number is successful. Thank you for using our service.',
-        };
-      } else {
-        return {
-          'success': false,
-          'message': 'Recharge of ₹$amount for $number has failed. Please try again.',
-        };
+      // Check for success based on API's response
+      if (responseData['Status'] == 'True' && responseData['Data'] is List && responseData['Data'].isNotEmpty) {
+        final nestedData = responseData['Data'].first;
+        if (nestedData['status'] == 'SUCCESS') {
+          // final message = nestedData['message'] ?? 'Recharge successful!';
+          final liveTrnId = nestedData['LivetrnId'] ?? '';
+          final fullMessage = 'Recharge Successful\nLive Transaction ID: $liveTrnId';
+          return {'success': true, 'message': fullMessage};
+        }
       }
+
+      // Default failure for any other case
+      final errorMessage = responseData['Message'] ?? 'Recharge failed. Please try again.';
+      return {'success': false, 'message': errorMessage};
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Something went wrong: $e',
-      };
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      return {'success': false, 'message': 'An unexpected error occurred.'};
     }
   }
 
+  Future<Map<String, dynamic>> dthRecharge({
+    required String number,
+    required String amount,
+    required String operator,
+  }) async {
+    try {
+      final appCache = AppCache();
+      String? formNo = await appCache.getUserFormNo();
+      if (formNo == null) {
+        return {'success': false, 'message': 'User not logged in.'};
+      }
 
+      var requestBody = {
+        'formno': formNo,
+        'services': "D",
+        'rechargeno': number,
+        'amount': amount,
+        'opcode': operator,
+      };
+
+      final response = await _apiClient.dio.post(
+        ApiUrls.baseUrl,
+        queryParameters: {'reqtype': 'recharge'},
+        data: requestBody,
+      );
+
+      final dynamic responseData = response.data;
+
+      if (response.statusCode == 200 && responseData is Map<String, dynamic>) {
+        if (responseData['Status'] == 'True' &&
+            responseData['Data'] is List &&
+            responseData['Data'].isNotEmpty) {
+          final nestedData = responseData['Data'].first;
+          if (nestedData is Map<String, dynamic> &&
+              nestedData['status'] == 'SUCCESS') {
+            final liveTrnId = nestedData['LivetrnId'] ?? '';
+            final fullMessage = 'Recharge Successful\nLive Transaction ID: $liveTrnId';
+            return {'success': true, 'message': fullMessage};
+          }
+        }
+        final errorMessage = responseData['Message'] ?? 'Recharge failed. Please try again.';
+        return {'success': false, 'message': errorMessage};
+      }
+
+      return {'success': false, 'message': 'An unexpected error occurred.'};
+    } catch (e) {
+      return {'success': false, 'message': 'An unexpected error occurred.'};
+    }
+  }
   Future<void> getDTHCashbackShow() async {
     try {
       final response =
-      await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
+          await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
         'ReqType': 'FillUserCommissionData',
         'RetailerID': 'MA==', // Use appropriate encoded retailer ID
         'ServiceID': 'RA==',
@@ -393,142 +462,107 @@ class ProviderScreen extends ChangeNotifier {
       print("Error fetching cashback data: $e");
     }
   }
-  List<String> rechargeTabList = List.empty(growable: true);
 
   Future<dynamic> getRechargePlan({
     required String number,
-    required String operator,
-    required String circle,
+    required String operatorId,
+    required String stateId,
   }) async {
     _isLoading = true;
     notifyListeners();
-    rechargePlanList.clear();
-    String encodedNumber = base64.encode(utf8.encode(number));
-    String encodedCircle = base64.encode(utf8.encode(circle));
-    String encodedOperator = base64.encode(utf8.encode(operator));
-
-    // Print base64-encoded values
-    print('Encoded RechargeNo: $encodedNumber');
-    print('Encoded CircleID: $encodedCircle');
-    print('Encoded OperatorID: $encodedOperator');
 
     try {
-      final response = await _apiClient.dio.get(
-        ApiUrls.baseUrl,
-        queryParameters: {
-          'ReqType': 'GetPlan',
-          'RechargeNo': encodedNumber,
-          'CircleID': encodedCircle,
-          'OperatorID': encodedOperator,
+      final response = await _apiClient.post(
+        'https://verifyapi.in/api/verifyBrowsePlan',
+        data: {
+          "operator_id": int.parse(operatorId),
+          "state_id": int.parse(stateId),
+          "mobile_number": number,
         },
+        options: Options(
+          headers: {
+            'api-key': '1877e9a140cb998f1c692adae4a1a76079a935fcc98d9ba44f',
+            'Content-Type': 'application/json',
+          },
+        ),
       );
+      print('API Response: ${response.data}');
 
-      var data = json.decode(response.data);
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        // Parse the entire response with the new model
+        final rechargeResponse = RechargeResponse.fromJson(response.data);
 
-      if (response.statusCode == 200) {
-        rechargePlanList = await List.castFrom(data['Data'].map((e) {
-          return RechargePlanModel.fromJson(e);
-        }).toList());
-        print('Recharge Plan List: $rechargePlanList');
+        // Populate the main plan list and tab list
+        rechargePlanList = rechargeResponse.allPlans;
+        rechargeTabList = rechargePlanList.map((plan) => plan.type).toSet().toList();
 
-        // Create type list
-        var tempList = rechargePlanList.map((e) => e.type).toList();
-        print('Type List: $tempList');
-
-        for (int i = 0; i < tempList.length; i++) {
-          if (!rechargeTabList.contains(tempList[i])) {
-            rechargeTabList.add(tempList[i]);
-          }
+        // Filter the list for the first tab
+        if (rechargeTabList.isNotEmpty) {
+          filterRechargePlanList(rechargeTabList.first);
+        } else {
+          filteredRechargePlanList = [];
         }
-        print('Recharge Tab List: $rechargeTabList');
 
-        // Filter list according to the type
-        filterRechargePlanList(rechargeTabList.first);
+        notifyListeners();
+        return response.data;
       }
-      return data;
+    } on DioError catch (e) {
+      if (e.response != null) {
+        return e.response!.data;
+      }
     } catch (e) {
       print('Error fetching recharge plans: $e');
-      return null;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+    return null;
   }
 
-  filterRechargePlanList(value) {
-    filteredRechargePlanList = rechargePlanList
-        .where(
-          (element) => element.type.contains(value),
-    )
-        .map(
-          (e) => e,
-    )
-        .toList();
-
-    print(filteredRechargePlanList);
-    update();
+  void filterRechargePlanList(String tab) {
+    // Filter the main list to show plans for the selected tab
+    filteredRechargePlanList = rechargePlanList.where((plan) => plan.type == tab).toList();
+    notifyListeners();
   }
 
   List<CashbackModel> cashback = List.empty(growable: true);
+  //
+  // Future<dynamic> getCashbackDetails({
+  //   required String serviceId,
+  //   required String operatorId,
+  //   required String amount,
+  // }) async {
+  //   _isLoading = true;
+  //   notifyListeners();
+  //   var formno = await cache.getUserFormNo();
+  //   final response =
+  //       await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
+  //     'ReqType': 'CommissionCashback',
+  //     'RetailerFormno': formno,
+  //     'ServiceID': base64.encode(utf8.encode(serviceId)),
+  //     'OperatorID': base64.encode(utf8.encode(operatorId)),
+  //     'amount': base64.encode(utf8.encode(amount)),
+  //   });
+  //   var data = json.decode(response.data);
+  //   if (response.statusCode == 200) {
+  //     cashback = await List.castFrom(data['Data'].map((e) {
+  //       return CashbackModel.fromJson(e);
+  //     }).toList());
+  //   }
+  //   print(cashback);
+  //   _isLoading = false;
+  //   notifyListeners();
+  //   return data;
+  // }
 
-  Future<dynamic> getCashbackDetails({
-    required String serviceId,
-    required String operatorId,
-    required String amount,
-  }) async {
-    _isLoading = true;
-    notifyListeners();
-    var formno = await cache.getUserFormNo();
-    final response =
-    await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
-      'ReqType': 'CommissionCashback',
-      'RetailerFormno': formno,
-      'ServiceID': base64.encode(utf8.encode(serviceId)),
-      'OperatorID': base64.encode(utf8.encode(operatorId)),
-      'amount': base64.encode(utf8.encode(amount)),
-    });
-    var data = json.decode(response.data);
-    if (response.statusCode == 200) {
-      cashback = await List.castFrom(data['Data'].map((e) {
-        return CashbackModel.fromJson(e);
-      }).toList());
-    }
-    print(cashback);
-   _isLoading = false;
-    notifyListeners();
-    return data;
-  }
 
-  Future<dynamic> dthRecharge({
-    required String number,
-    required String amount,
-    required String operator,
-  }) async {
-    _isLoading = true;
-    notifyListeners();
-    var formno = await cache.getUserFormNo();
-
-    final response =
-    await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
-      'ReqType': 'DthRecharge',
-      'FormNo': formno,
-      'RechargeNo': base64.encode(utf8.encode(number)),
-      'amount': base64.encode(utf8.encode(amount)),
-      'OperatorType': base64.encode(utf8.encode(operator)),
-    });
-    var data = json.decode(response.data);
-    if (data['Status'] == 'True') {}
-    _isLoading = false;
-    notifyListeners();
-    return data;
-  }
 
   Future<dynamic> fetchBankName() async {
-   _isLoading = true;
+    _isLoading = true;
     notifyListeners();
 
     final response =
-    await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
+        await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
       'ReqType': 'FillBank',
     });
     var data = json.decode(response.data);
@@ -541,7 +575,6 @@ class ProviderScreen extends ChangeNotifier {
     notifyListeners();
     return data;
   }
-
 
   Future<void> getBankDetailAllDataShow() async {
     _isLoading = true;
@@ -588,7 +621,6 @@ class ProviderScreen extends ChangeNotifier {
     }
   }
 
-
   Future<void> updateBankDetails({
     required String bankId,
     required String branchName,
@@ -609,7 +641,7 @@ class ProviderScreen extends ChangeNotifier {
     var formno = await cache.getUserFormNo();
     try {
       final response =
-      await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
+          await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
         'ReqType': 'Fillbankdetailsubmit',
         'Id': 'MA==',
         'Mobileno': 'OTgyOTg5ODI5OA==',
@@ -663,7 +695,7 @@ class ProviderScreen extends ChangeNotifier {
     var formno = await cache.getUserFormNo();
 
     final response =
-    await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
+        await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
       'ReqType': 'DepositeRequestDetails',
       'formNo': formno,
     });
@@ -677,7 +709,7 @@ class ProviderScreen extends ChangeNotifier {
       throw Exception("Failed to load deposit details");
     }
 
-   _isLoading = false;
+    _isLoading = false;
     notifyListeners();
   }
 
@@ -688,7 +720,8 @@ class ProviderScreen extends ChangeNotifier {
 
     var formno = await cache.getUserFormNo();
 
-    final response = await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
+    final response =
+        await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
       'ReqType': 'WithdrawalBeneficary',
       'FormNo': formno,
     });
@@ -711,14 +744,14 @@ class ProviderScreen extends ChangeNotifier {
   }
 
   List<WithdrawalDetailModel> withdrawalDetailModel =
-  List.empty(growable: true);
+      List.empty(growable: true);
   Future<dynamic> getWithdrawalFundDetails() async {
     _isLoading = true;
     notifyListeners();
     var formno = await cache.getUserFormNo();
 
     final response =
-    await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
+        await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
       'ReqType': 'WithdrawalReqDetails',
       'formNo': formno,
     });
@@ -735,6 +768,7 @@ class ProviderScreen extends ChangeNotifier {
     notifyListeners();
     return data;
   }
+
   List<BankDetailShowModel> bankDetailShowModel = List.empty(growable: true);
   Future<void> getBankDetailShow() async {
     _isLoading = true;
@@ -742,9 +776,9 @@ class ProviderScreen extends ChangeNotifier {
     var formno = await cache.getUserFormNo();
     try {
       final response =
-      await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
+          await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
         'ReqType': 'FillDetailBank',
-        'FormNo':formno,
+        'FormNo': formno,
       });
 
       if (response.statusCode == 200) {
@@ -765,8 +799,6 @@ class ProviderScreen extends ChangeNotifier {
       notifyListeners();
     }
   }
-
-
 
   Future<dynamic> submitDepositRequest({
     required BuildContext context, // Accept BuildContext as a parameter
@@ -794,7 +826,7 @@ class ProviderScreen extends ChangeNotifier {
       final base64Remark = base64Encode(utf8.encode(remark));
       final base64BankID = base64Encode(utf8.encode(bankID));
       final base64ImageCode = imageCode; // Do not encode imageCode again
-     print ("Image Recepit :$base64ImageCode");
+      print("Image Recepit :$base64ImageCode");
       print("Sending Parameters:");
       print({
         'ReqType': 'DepositeRequest',
@@ -838,7 +870,7 @@ class ProviderScreen extends ChangeNotifier {
 
       print("Parsed Response: $data");
 
-     _isLoading = false;
+      _isLoading = false;
       notifyListeners();
       return data; // Return the parsed response
     } catch (e) {
@@ -858,7 +890,7 @@ class ProviderScreen extends ChangeNotifier {
     notifyListeners();
 
     final response =
-    await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
+        await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
       'ReqType': 'LoadPaymode',
     });
     var data = json.decode(response.data);
@@ -879,7 +911,7 @@ class ProviderScreen extends ChangeNotifier {
     notifyListeners();
 
     final response =
-    await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
+        await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
       'ReqType': 'LoadCompanyBankDetail',
     });
     var data = json.decode(response.data);
@@ -900,7 +932,7 @@ class ProviderScreen extends ChangeNotifier {
     notifyListeners();
 
     final response =
-    await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
+        await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
       'ReqType': 'LoadCompanyUPIDetail',
     });
     var data = json.decode(response.data);
@@ -914,19 +946,4 @@ class ProviderScreen extends ChangeNotifier {
     notifyListeners();
     return data;
   }
-
-
-
-
-
-
-
-
-
-
-
 }
-
-
-
-

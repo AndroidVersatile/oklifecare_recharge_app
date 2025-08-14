@@ -92,16 +92,32 @@ class AppCache {
     return await _prefs!.getString(mobile);
   }
 
+  // Future<bool> logout() async {
+  //   try {
+  //     await clearCache();
+  //     bool result = await _prefs?.setBool(isLogin, false) ?? false;
+  //     return result; // Return true if logout is successful
+  //   } catch (e) {
+  //     return false; // Return false in case of an error
+  //   }
+  // }
+
   Future<bool> logout() async {
     try {
       await clearCache();
+
+      // Remove stored credentials
+      await _prefs?.remove("user_id");
+      await _prefs?.remove("password");
+
+      // Set login status false
       bool result = await _prefs?.setBool(isLogin, false) ?? false;
+
       return result; // Return true if logout is successful
     } catch (e) {
       return false; // Return false in case of an error
     }
   }
-
 
   saveUserPass(String pass) async {
     await _prefs?.setString(userPass, pass);
