@@ -1,5 +1,4 @@
 class AppPages {
-  ///common pages
   static const String splashPath = '/';
   static const String customerselection = '/customerselection';
   static const String login = '/login';
@@ -37,9 +36,7 @@ class AppPages {
   static const String categoreyscreen = "/categoreyscreen";
   static const String searchproductscreen = "/searchproductscreen";
   static const String benefitscategoreyscreen = "/benefitscategoreyscreen";
-  static const String bloodcategoreyscreen = "/bloodcategoreyscreen";
-  static const String emergencycategoreyscreen = "/emergencycategoreyscreen";
   static const String myorderscreen = "/myorderscreen";
-
-
+  static const String walletscreen ="/walletscreen";
+  static const String rechargesuccessscreen ="/rechargesuccessscreen";
 }

@@ -8,30 +8,30 @@ import '../../theme/app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
-
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
-
 class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = Provider.of<ProviderScreen>(context, listen: false);
-      // Ensure fetchUserData and fetchWalletBalance are called once
-      provider.fetchUserData();
-      provider.fetchWalletBalance();
+      _handleRefresh();
     });
+  }
+
+  Future<void> _handleRefresh() async {
+    final provider = Provider.of<ProviderScreen>(context, listen: false);
+    await provider.fetchUserData();
+    await provider.fetchWalletBalance();
   }
 
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ProviderScreen>(context);
-    // Use the userLoginDetail model to get memberName
     final memberName = provider.memberName;
     final walletBalance = provider.walletBalance;
-
+    final memberId = provider.currentUserId;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: PreferredSize(
@@ -54,7 +54,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   backgroundColor: Colors.white,
                 ),
                 const SizedBox(width: 5),
-                // Display MemberName from the provider
                 Text(
                   memberName ?? "Profile",
                   style: const TextStyle(color: Colors.white, fontSize: 14),
@@ -102,343 +101,351 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-                height: 200,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppTheme.radius),
-                  image: DecorationImage(
-                    image: AssetImage(Assets.wallet),
-                    fit: BoxFit.fill,
+      body: RefreshIndicator(
+        onRefresh: _handleRefresh,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(), // Always allow scrolling even if content is small
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+                  height: 200,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppTheme.radius),
+                    image: DecorationImage(
+                      image: AssetImage(Assets.wallet),
+                      fit: BoxFit.fill,
+                    ),
                   ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top: 20),
-                      child: Text(
-                        'Member Name',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 20),
+                        child: Text(
+                          'Member Name',
+                          style: TextStyle(color: Colors.white, fontSize: 14),
+                        ),
+                      ),
+                      Text(
+                        memberName ?? "Loading...",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Id No',
                         style: TextStyle(color: Colors.white, fontSize: 14),
                       ),
-                    ),
-                    Text(
-                      memberName ?? "Loading...",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Id No',
-                      style: TextStyle(color: Colors.white, fontSize: 14),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: const [
-                            Text(
-                              "767 890 567", // This is a hardcoded ID, you might want to fetch this from your provider
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(width: 8),
-                          ],
-                        ),
-                        const SizedBox(width: 8),
-                        Row(
-                          children: [
-                            Text(
-                              '₹${walletBalance?.balance.toStringAsFixed(2) ?? '0.00'}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        )
-                      ],
-                    ),
-                    const Spacer(),
-                  ],
-                ),
-              ),
-              AppTheme.verticalSpacing(),
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: Container(
-                      height: 140,
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
-                            blurRadius: 5,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Flexible(
-                                child: Text(
-                                  'Recharge & Pay Bills',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w500, fontSize: 13),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
+                            children:  [
                               Text(
-                                'View All',
+                                memberId ?? "Loading...",
                                 style: TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 13,
-                                  decoration: TextDecoration.underline,
-                                  decorationColor: Colors.red,
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              SizedBox(width: 8),
+                            ],
+                          ),
+                          const SizedBox(width: 8),
+                          Row(
+                            children: [
+                              GestureDetector(
+                                onTap:(){
+                                  context.pushNamed(AppPages.walletscreen);
+                                },
+                                child: Text(
+                                  '₹${walletBalance?.balance.toStringAsFixed(2) ?? '0.00'}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ],
-                          ),
-                          const SizedBox(height: 15),
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                          )
+                        ],
+                      ),
+                      const Spacer(),
+                    ],
+                  ),
+                ),
+                AppTheme.verticalSpacing(),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Container(
+                        height: 140,
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.2),
+                              blurRadius: 5,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                GestureDetector(
-                                  onTap: () {
-                                    context.pushNamed(AppPages.rechargePlan);
-                                  },
-                                  child: Column(
-                                    children: [
-                                      Image.asset(
-                                        "assets/mobile.png",
-                                        height: 50,
-                                        fit: BoxFit.fill,
-                                        color: const Color(0xFF8E2DE2),
-                                        colorBlendMode: BlendMode.srcIn,
-                                      ),
-                                      const SizedBox(height: 5),
-                                      const Text('Mobile', style: TextStyle(fontSize: 12)),
-                                    ],
+                                const Flexible(
+                                  child: Text(
+                                    'Recharge & Pay Bills',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w500, fontSize: 13),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                const SizedBox(width: 16),
-                                GestureDetector(
-                                  onTap: () {
-                                    context.pushNamed(AppPages.dthRecharge);
-                                  },
-                                  child: Column(
-                                    children: [
-                                      Image.asset(
-                                        "assets/dth.png",
-                                        height: 50,
-                                        fit: BoxFit.fill,
-                                        color: const Color(0xFF8E2DE2),
-                                        colorBlendMode: BlendMode.srcIn,
-                                      ),
-                                      const SizedBox(height: 5),
-                                      const Text('DTH', style: TextStyle(fontSize: 12)),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                GestureDetector(
-                                  onTap: () {
-                                    context.pushNamed(AppPages.electricityScreen);
-                                  },
-                                  child: Column(
-                                    children: [
-                                      Image.asset(
-                                        "assets/electricity.png",
-                                        height: 50,
-                                        fit: BoxFit.fill,
-                                        color: const Color(0xFF8E2DE2),
-                                        colorBlendMode: BlendMode.srcIn,
-                                      ),
-                                      const SizedBox(height: 5),
-                                      const Text('Electricity', style: TextStyle(fontSize: 12)),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                GestureDetector(
-                                  onTap: () {
-                                    context.pushNamed(AppPages.bbpsScreen);
-                                  },
-                                  child: Column(
-                                    children: [
-                                      Image.asset(
-                                        "assets/bbps.png",
-                                        height: 50,
-                                        fit: BoxFit.fill,
-                                        color: const Color(0xFF8E2DE2),
-                                        colorBlendMode: BlendMode.srcIn,
-                                      ),
-                                      const SizedBox(height: 5),
-                                      const Text('BBPS', style: TextStyle(fontSize: 12)),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                GestureDetector(
-                                  onTap: () {
-                                    context.pushNamed(AppPages.insuranseScreen);
-                                  },
-                                  child: Column(
-                                    children: [
-                                      Image.asset(
-                                        "assets/insurance.png",
-                                        height: 50,
-                                        fit: BoxFit.fill,
-                                        color: const Color(0xFF8E2DE2),
-                                        colorBlendMode: BlendMode.srcIn,
-                                      ),
-                                      const SizedBox(height: 5),
-                                      const Text('Insurance', style: TextStyle(fontSize: 12)),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                GestureDetector(
-                                  onTap: () {
-                                    context.pushNamed(AppPages.moneytransferScreen);
-                                  },
-                                  child: Column(
-                                    children: [
-                                      Image.asset(
-                                        "assets/moneytransfer.png",
-                                        height: 50,
-                                        fit: BoxFit.fill,
-                                        color: const Color(0xFF8E2DE2),
-                                        colorBlendMode: BlendMode.srcIn,
-                                      ),
-                                      const SizedBox(height: 5),
-                                      const Text('Money Transfer', style: TextStyle(fontSize: 12)),
-                                    ],
+                                Text(
+                                  'View All',
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 13,
+                                    decoration: TextDecoration.underline,
+                                    decorationColor: Colors.red,
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              AppTheme.verticalSpacing(),
-              Card(
-                elevation: 2,
-                child: Container(
-                  width: double.infinity,
-                  height: 150,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    image: const DecorationImage(
-                      image: AssetImage('assets/banner.png'),
-                      fit: BoxFit.fill,
-                    ),
-                  ),
-                ),
-              ),
-              AppTheme.verticalSpacing(mul: 1),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildFixedHorizontalCard(
-                    'assets/order.png',
-                    "Recharge History",
-                    onTap: () {
-                      context.pushNamed(AppPages.HistoryScreen);
-                    },
-                  ),
-                  _buildFixedHorizontalCard(
-                    "assets/reward.png",
-                    "Reward",
-                    onTap: () {
-                      context.pushNamed(AppPages.rewardScreen);
-                    },
-                  ),
-                  _buildFixedHorizontalCard(
-                    "assets/earn.png",
-                    "Refer & Earn",
-                    onTap: () {
-                      context.pushNamed(AppPages.referearnScreen);
-                    },
-                  ),
-                ],
-              ),
-              AppTheme.verticalSpacing(mul: 1),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Card(
-                        elevation: 1,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
-                        clipBehavior: Clip.antiAlias,
-                        child: SizedBox(
-                          height: 100,
-                          child: Image.asset(
-                            'assets/offeradd.png',
-                            fit: BoxFit.fill,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 2),
-                    Expanded(
-                      child: Card(
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
-                        clipBehavior: Clip.antiAlias,
-                        child: SizedBox(
-                          height: 100,
-                          child: Image.asset(
-                            'assets/offeradd.png',
-                            fit: BoxFit.fill,
-                          ),
+                            const SizedBox(height: 15),
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  GestureDetector(
+                                    onTap: () {
+                                      context.pushNamed(AppPages.rechargePlan);
+                                    },
+                                    child: Column(
+                                      children: [
+                                        Image.asset(
+                                          "assets/mobile.png",
+                                          height: 50,
+                                          fit: BoxFit.fill,
+                                          color: const Color(0xFF8E2DE2),
+                                          colorBlendMode: BlendMode.srcIn,
+                                        ),
+                                        const SizedBox(height: 5),
+                                        const Text('Mobile', style: TextStyle(fontSize: 12)),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  GestureDetector(
+                                    onTap: () {
+                                      context.pushNamed(AppPages.dthRecharge);
+                                    },
+                                    child: Column(
+                                      children: [
+                                        Image.asset(
+                                          "assets/dth.png",
+                                          height: 50,
+                                          fit: BoxFit.fill,
+                                          color: const Color(0xFF8E2DE2),
+                                          colorBlendMode: BlendMode.srcIn,
+                                        ),
+                                        const SizedBox(height: 5),
+                                        const Text('DTH', style: TextStyle(fontSize: 12)),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  GestureDetector(
+                                    onTap: () {
+                                      context.pushNamed(AppPages.electricityScreen);
+                                    },
+                                    child: Column(
+                                      children: [
+                                        Image.asset(
+                                          "assets/electricity.png",
+                                          height: 50,
+                                          fit: BoxFit.fill,
+                                          color: const Color(0xFF8E2DE2),
+                                          colorBlendMode: BlendMode.srcIn,
+                                        ),
+                                        const SizedBox(height: 5),
+                                        const Text('Electricity', style: TextStyle(fontSize: 12)),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  GestureDetector(
+                                    onTap: () {
+                                      context.pushNamed(AppPages.bbpsScreen);
+                                    },
+                                    child: Column(
+                                      children: [
+                                        Image.asset(
+                                          "assets/bbps.png",
+                                          height: 50,
+                                          fit: BoxFit.fill,
+                                          color: const Color(0xFF8E2DE2),
+                                          colorBlendMode: BlendMode.srcIn,
+                                        ),
+                                        const SizedBox(height: 5),
+                                        const Text('BBPS', style: TextStyle(fontSize: 12)),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  GestureDetector(
+                                    onTap: () {
+                                      context.pushNamed(AppPages.insuranseScreen);
+                                    },
+                                    child: Column(
+                                      children: [
+                                        Image.asset(
+                                          "assets/insurance.png",
+                                          height: 50,
+                                          fit: BoxFit.fill,
+                                          color: const Color(0xFF8E2DE2),
+                                          colorBlendMode: BlendMode.srcIn,
+                                        ),
+                                        const SizedBox(height: 5),
+                                        const Text('Insurance', style: TextStyle(fontSize: 12)),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  GestureDetector(
+                                    onTap: () {
+                                      context.pushNamed(AppPages.moneytransferScreen);
+                                    },
+                                    child: Column(
+                                      children: [
+                                        Image.asset(
+                                          "assets/moneytransfer.png",
+                                          height: 50,
+                                          fit: BoxFit.fill,
+                                          color: const Color(0xFF8E2DE2),
+                                          colorBlendMode: BlendMode.srcIn,
+                                        ),
+                                        const SizedBox(height: 5),
+                                        const Text('Money Transfer', style: TextStyle(fontSize: 12)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              AppTheme.verticalSpacing(),
-            ],
+                AppTheme.verticalSpacing(),
+                Card(
+                  elevation: 2,
+                  child: Container(
+                    width: double.infinity,
+                    height: 150,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      image: const DecorationImage(
+                        image: AssetImage('assets/banner.png'),
+                        fit: BoxFit.fill,
+                      ),
+                    ),
+                  ),
+                ),
+                AppTheme.verticalSpacing(mul: 1),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildFixedHorizontalCard(
+                      'assets/order.png',
+                      "Recharge History",
+                      onTap: () {
+                        context.pushNamed(AppPages.HistoryScreen);
+                      },
+                    ),
+                    _buildFixedHorizontalCard(
+                      "assets/reward.png",
+                      "Wallet History",
+                      onTap: () {
+                        context.pushNamed(AppPages.walletscreen);
+                      },
+                    ),
+                    _buildFixedHorizontalCard(
+                      // "assets/earn.png",
+                      'assets/order.png',
+                      "Refer & Earn",
+                      onTap: () {
+                        context.pushNamed(AppPages.referearnScreen);
+                      },
+                    ),
+                  ],
+                ),
+                AppTheme.verticalSpacing(mul: 1),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Card(
+                          elevation: 1,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                          clipBehavior: Clip.antiAlias,
+                          child: SizedBox(
+                            height: 100,
+                            child: Image.asset(
+                              'assets/offeradd.png',
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Expanded(
+                        child: Card(
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                          clipBehavior: Clip.antiAlias,
+                          child: SizedBox(
+                            height: 100,
+                            child: Image.asset(
+                              'assets/offeradd.png',
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                AppTheme.verticalSpacing(),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-
-  // A helper function for building fixed-size cards (not used in the provided body)
   Widget _buildFixedCard(String imagePath, String label, VoidCallback onTap) {
     return Padding(
       padding: const EdgeInsets.only(right: 5.0),
@@ -475,8 +482,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-  // A helper function for building horizontal cards
   Widget _buildFixedHorizontalCard(
       String imagePath,
       String title, {

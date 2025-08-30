@@ -4,12 +4,9 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
-
-// import aapke files ka
+import '../../constants/app_cache.dart';
 import '../../providers/loginProvider.dart';
 import '../../routing/app_pages.dart';
-import 'login_screen.dart';
-
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,13 +26,9 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     _loadSavedCredentials();
   }
-
-  /// Base64 Encode (agar kahin chahiye)
   String encodeBase64(String value) {
     return base64.encode(utf8.encode(value));
   }
-
-  /// Saved User ID & Password load karna
   Future<void> _loadSavedCredentials() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? savedUserId = prefs.getString("user_id");
@@ -48,18 +41,15 @@ class _LoginScreenState extends State<LoginScreen> {
       });
     }
   }
-
-  /// Login Handle
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       String userId = _userIdController.text.trim();
       String password = _passwordController.text.trim();
-      final loginProvider =
-      Provider.of<ProviderScreen>(context, listen: false);
-
+      final loginProvider = Provider.of<ProviderScreen>(context, listen: false);
       final result = await loginProvider.loginUser(userId, password);
 
       if (result['Status'] == 'True') {
+        await AppCache().setLoggedIn(true);
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString("user_id", userId);
         await prefs.setString("password", password);
@@ -86,8 +76,6 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
-
-
 
   @override
   Widget build(BuildContext context) {

@@ -20,24 +20,22 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       duration: const Duration(seconds: 4),
       vsync: this,
     );
-
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+    _controller.forward();
 
-    _controller.forward(); // Start the animation
-
-    _navigate(); // Start delayed navigation
+    _navigate();
   }
 
   Future<void> _navigate() async {
-    await Future.delayed(Duration(seconds: 4)); // Wait for animation
-
-    await AppCache().checkInit(); // Initialize cache
+    await Future.delayed(const Duration(seconds: 4));
+    await AppCache().checkInit();
     bool isLoggedIn = AppCache().isUserLoggedIn();
-
-    if (isLoggedIn) {
-      context.go(AppPages.CustomBottomNavBar);
-    } else {
-      context.go(AppPages.customerselection);
+    if (mounted) {
+      if (isLoggedIn) {
+        context.go(AppPages.CustomBottomNavBar);
+      } else {
+        context.go(AppPages.customerselection);
+      }
     }
   }
 
@@ -49,7 +47,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         body: Stack(
           fit: StackFit.expand,
           children: [
-            // Background splash image
             Image.asset(
               "assets/splashh.png",
               fit: BoxFit.cover,

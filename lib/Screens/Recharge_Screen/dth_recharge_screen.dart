@@ -15,7 +15,6 @@ class DthRechargeScreen extends StatefulWidget {
 }
 
 class _DthRechargeScreenState extends State<DthRechargeScreen> {
-  // Use a nullable type and initialize it to null
   OperatorModel? operator;
 
   @override
@@ -23,8 +22,6 @@ class _DthRechargeScreenState extends State<DthRechargeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       var provider = context.read<ProviderScreen>();
       await provider.getRechargeOperator();
-      // After getting the operators, set the first one as the default.
-      // This must be done inside `initState` and after the provider is updated.
       if (provider.operatorModel.isNotEmpty) {
         setState(() {
           operator = provider.operatorModel.first;
@@ -43,8 +40,6 @@ class _DthRechargeScreenState extends State<DthRechargeScreen> {
   @override
   Widget build(BuildContext context) {
     var provider = Provider.of<ProviderScreen>(context);
-
-    // FIX: Show a loading spinner if the operator data is not yet available.
     if (provider.operatorModel.isEmpty) {
       return Scaffold(
         appBar: AppBar(
@@ -78,12 +73,9 @@ class _DthRechargeScreenState extends State<DthRechargeScreen> {
                     children: [
                       _buildDropdownField(
                         label: 'Operator',
-                        // FIX: Use the operatorName from the operator model.
-                        // We can use the ! operator safely now because of the loading check above.
                         value: operator!.operatorName,
                         items: provider.operatorModel.map((e) => e.operatorName).toList(),
                         onChanged: (val) {
-                          // FIX: Find the operator object and update the state.
                           setState(() {
                             operator = provider.operatorModel.firstWhere(
                                   (e) => e.operatorName == val,
@@ -96,7 +88,7 @@ class _DthRechargeScreenState extends State<DthRechargeScreen> {
                         label: 'Enter DTH No.',
                         value: number,
                         keyboardType: TextInputType.number,
-                        maxLength: 10, // यह मान अब _buildTextField के अंदर के TextFormField तक पहुँच जाएगा
+                        maxLength: 10,
                         onChanged: (val) {
                           setState(() {
                             number = val;

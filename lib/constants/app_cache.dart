@@ -27,6 +27,14 @@ class AppCache {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_keyMemberName);
   }
+  Future<bool> saveUserId(String userId) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.setString('userId', userId);
+  }
+  Future<String?> getUserId() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userId');
+  }
   Future<bool> checkInit() async {
     if (isInit) {
       return true;
@@ -45,17 +53,21 @@ class AppCache {
     });
   }
 
-  isUserLoggedIn() {
-    return _prefs?.getBool(isLogin) ?? false;
-  }
-
   clearCache() async {
     await _prefs?.setBool(isLogin, false);
     await _prefs?.clear();
   }
 
-  setLoggedIn() async {
-    await _prefs!.setBool(isLogin, true);
+  Future<void> setLoggedIn(bool isLoggedIn) async {
+    await _prefs?.setBool("isLoggedIn", isLoggedIn);
+  }
+
+  bool isUserLoggedIn() {
+    return _prefs?.getBool("isLoggedIn") ?? false;
+  }
+
+  Future<void> clearLogin() async {
+    await _prefs?.remove("isLoggedIn");
   }
 
   setUserType(user) async {
@@ -88,10 +100,7 @@ class AppCache {
     await prefs.setString('userId', userId);
   }
 
-  Future<String?> getUserId() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('userId');
-  }
+
 
   setUserMobile(user) async {
     await _prefs!.setString(mobile, user);
@@ -100,28 +109,12 @@ class AppCache {
   getUserMobile() async {
     return await _prefs!.getString(mobile);
   }
-
-  // Future<bool> logout() async {
-  //   try {
-  //     await clearCache();
-  //     bool result = await _prefs?.setBool(isLogin, false) ?? false;
-  //     return result; // Return true if logout is successful
-  //   } catch (e) {
-  //     return false; // Return false in case of an error
-  //   }
-  // }
-
   Future<bool> logout() async {
     try {
       await clearCache();
-
-      // Remove stored credentials
       await _prefs?.remove("user_id");
       await _prefs?.remove("password");
-
-      // Set login status false
       bool result = await _prefs?.setBool(isLogin, false) ?? false;
-
       return result; // Return true if logout is successful
     } catch (e) {
       return false; // Return false in case of an error

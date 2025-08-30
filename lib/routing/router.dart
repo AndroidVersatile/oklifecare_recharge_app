@@ -19,6 +19,7 @@ import '../Screens/Recharge_Screen/insuranse_screen.dart';
 import '../Screens/Recharge_Screen/money_transfer_screen.dart';
 import '../Screens/Recharge_Screen/recharge_detail_creen.dart';
 import '../Screens/Recharge_Screen/recharge_plan_screen.dart';
+import '../Screens/Recharge_Screen/recharge_success.dart';
 import '../Screens/Recharge_Screen/refer_earn_screen.dart';
 import '../Screens/Recharge_Screen/reward_screen.dart';
 import '../Screens/Transction history/transaction_history.dart';
@@ -29,6 +30,8 @@ import '../Screens/receivemoney_screen.dart';
 import '../Screens/scantopay_screen.dart';
 import '../Screens/sendmoney_screen.dart';
 import '../Screens/splash_screen.dart';
+import '../Screens/wallet_screen.dart';
+import '../models/recharge_model.dart';
 import '../models/user_model.dart';
 import '../widgets/error_utils.dart';
 import 'app_pages.dart';
@@ -117,28 +120,6 @@ GoRouter buildRouter(BuildContext context, String initialRoute) {
         },
       ),
       GoRoute(
-        path:
-            '${AppPages.rechargePlanDetail}/:operator/:circle/:amount/:mobile',
-        name: AppPages.rechargePlanDetail,
-        builder: (context, state) {
-          String model = state.pathParameters['operator'] ?? '';
-
-          var operator =
-              OperatorModel.fromJson(ErrorUtils.convertBase64ToJson(model));
-          String circle = state.pathParameters['circle'] ?? '';
-          String amount = state.pathParameters['amount'] ?? '';
-          String mobile = state.pathParameters['mobile'] ?? '';
-
-          // Corrected the widget name from RechargePlanDetailScreen to RechargeDetailScreen
-          return RechargeDetailScreen(
-            operator: operator,
-            circle: circle,
-            amount: amount,
-            mobile: mobile,
-          );
-        },
-      ),
-      GoRoute(
         path: AppPages.HistoryScreen,
         name: AppPages.HistoryScreen,
         builder: (context, state) {
@@ -171,6 +152,23 @@ GoRouter buildRouter(BuildContext context, String initialRoute) {
         name: AppPages.rechargePlan,
         builder: (context, state) {
           return RechargePlanScreen();
+        },
+      ),
+      GoRoute(
+        path: AppPages.rechargePlanDetail,
+        name: AppPages.rechargePlanDetail,
+        builder: (context, state) {
+          // Extract the data from the 'extra' parameter
+          final extra = state.extra as Map<String, dynamic>;
+          final plan = extra['plan'] as RechargePlan;
+          final mobileNumber = extra['mobileNumber'] as String;
+          final operatorDetails = extra['operatorDetails'] as Map<String, dynamic>;
+
+          return RechargeDetailScreen(
+            plan: plan,
+            mobileNumber: mobileNumber,
+            operatorDetails: operatorDetails,
+          );
         },
       ),
       GoRoute(
@@ -248,6 +246,23 @@ GoRouter buildRouter(BuildContext context, String initialRoute) {
         name: AppPages.addbankscreen,
         builder: (context, state) {
           return AddBankDetailScreen();
+        },
+      ),
+      GoRoute(
+        path: AppPages.walletscreen,
+        name: AppPages.walletscreen,
+        builder: (context, state) {
+          return WalletScreen();
+        },
+      ),
+      GoRoute(
+        path: AppPages.rechargesuccessscreen,
+        name: AppPages.rechargesuccessscreen,
+        builder: (context, state) {
+          final rechargeData = state.extra as RechargeResponse;
+          return RechargeSuccessScreen(
+            rechargeData: rechargeData,
+          );
         },
       ),
     ],

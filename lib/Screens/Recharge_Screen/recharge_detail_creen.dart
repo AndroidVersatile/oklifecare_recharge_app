@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../models/user_model.dart';
+import '../../models/recharge_model.dart';
 import '../../providers/loginProvider.dart';
-import '../../theme/app_theme.dart';
-import '../../widgets/button.dart';
+import '../../routing/app_pages.dart';
 
 class RechargeDetailScreen extends StatefulWidget {
-  final OperatorModel operator;
-  final String circle;
-  final String mobile;
-  final String amount;
+  final RechargePlan plan;
+  final String mobileNumber;
+  final Map<String, dynamic>? operatorDetails;
 
   const RechargeDetailScreen({
-    required this.operator,
-    required this.circle,
-    required this.mobile,
-    required this.amount,
     super.key,
+    required this.plan,
+    required this.mobileNumber,
+    this.operatorDetails,
   });
 
   @override
@@ -26,257 +24,247 @@ class RechargeDetailScreen extends StatefulWidget {
 class _RechargeDetailScreenState extends State<RechargeDetailScreen> {
   final formKey = GlobalKey<FormState>();
   bool isLoading = false;
-
-  // Controller for the editable amount field
-  late TextEditingController _amountController;
-
-  @override
-  void initState() {
-    super.initState();
-    // Initialize the controller with the value passed from the widget
-    _amountController = TextEditingController(text: widget.amount);
-  }
-
-  @override
-  void dispose() {
-    _amountController.dispose();
-    super.dispose();
-  }
-
-  Widget _buildTextField({
-    required String label,
-    String? hint,
-    required String value,
-    required TextInputType keyboardType,
-    required int maxLength,
-    required Function(String) onChanged,
-    String? Function(String?)? validator,
-    bool enabled = true,
-    bool readOnly = false,
-    TextEditingController? controller, // Added a controller parameter
-  }) {
-    return TextFormField(
-      // Use controller instead of initialValue for editable fields
-      controller: controller,
-      initialValue: controller == null ? value : null,
-      enabled: enabled,
-      readOnly: readOnly,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Colors.grey),
-        hintText: hint,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-      ),
-      keyboardType: keyboardType,
-      onChanged: onChanged,
-      validator: validator,
-      style: const TextStyle(color: Colors.grey),
-      maxLength: maxLength,
-    );
-  }
+  final Color _primaryColor = const Color(0xFFA05FF0);
+  final Color _secondaryColor = const Color(0xFF6A40F0);
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<ProviderScreen>(context, listen: false);
-    final cashback = provider.cashback;
+    final provider = Provider.of<ProviderScreen>(context);
+    final String operatorName = widget.operatorDetails?['operatorName'] ?? 'N/A';
+    final String circle = widget.operatorDetails?['stateName'] ?? 'N/A';
+    final String operatorCode = (widget.operatorDetails?['operatorCode'] ??
+        widget.operatorDetails?['operatorId'])
+        ?.toString() ??
+        'N/A';
 
     return Scaffold(
-      resizeToAvoidBottomInset: false,
-      appBar: AppBar(title: const Text('Recharge')),
-      body: SingleChildScrollView(
-        child: Container(
-          margin: AppTheme.screenPadding,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.2),
-                spreadRadius: 2,
-                blurRadius: 5,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Form(
-            key: formKey,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildTextField(
-                    label: 'Operator',
-                    value: widget.operator.operatorName,
-                    enabled: false,
-                    readOnly: true,
-                    keyboardType: TextInputType.text,
-                    maxLength: 50,
-                    onChanged: (_) {},
-                  ),
-                  AppTheme.verticalSpacing(),
-                  _buildTextField(
-                    label: 'Circle',
-                    value: widget.circle,
-                    enabled: false,
-                    readOnly: true,
-                    keyboardType: TextInputType.text,
-                    maxLength: 50,
-                    onChanged: (_) {},
-                  ),
-                  AppTheme.verticalSpacing(),
-                  _buildTextField(
-                    label: 'Mobile No.',
-                    value: widget.mobile,
-                    keyboardType: TextInputType.phone,
-                    maxLength: 15,
-                    onChanged: (_) {},
-                    enabled: true,
-                    readOnly: true,
-                    validator: (val) => val == null || val.isEmpty
-                        ? 'Enter valid number'
-                        : null,
-                  ),
-                  AppTheme.verticalSpacing(),
-                  _buildTextField(
-                    label: 'Amount',
-                    // Use the controller for the amount field
-                    controller: _amountController,
-                    value: '', // Pass an empty value since the controller manages it
-                    keyboardType: TextInputType.number,
-                    maxLength: 10,
-                    // The onChanged is no longer required with a controller unless you need to update a state variable
-                    onChanged: (_) {},
-                    enabled: true,
-                    readOnly: false, // Set to false to make it editable
-                    validator: (val) => val == null || val.isEmpty
-                        ? 'Enter valid amount'
-                        : null,
-                  ),
-                  AppTheme.verticalSpacing(mul: 2),
-                  if (cashback.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.blue.shade200),
-                      ),
-                      child: Text(
-                        '${cashback.first.cashback} ${cashback.first.commType == 'Percentage' ? '%' : '\u{20B9}'} Cashback',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue.shade700,
-                        ),
-                      ),
-                    ),
-                  AppTheme.verticalSpacing(mul: 2),
-                  CustomElevatedBtn(
-                    isBigSize: true,
-                    onPressed: isLoading
-                        ? null
-                        : () async {
-                      if (!formKey.currentState!.validate()) return;
-
-                      setState(() => isLoading = true);
-
-                      // Use the value from the controller
-                      final response = await provider.prepaidRecharge(
-                        number: widget.mobile,
-                        amount: _amountController.text,
-                        operator: widget.operator.operatorCode.toString(),
-                      );
-
-                      setState(() => isLoading = false);
-
-                      final isSuccess = response['success'] ?? false;
-                      final message = response['message'] ?? 'Something went wrong';
-
-                      if (!mounted) return;
-
-                      showDialog(
-                        context: context,
-                        builder: (dialogContext) => Dialog(
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15)),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                CircleAvatar(
-                                  radius: 30,
-                                  backgroundColor: isSuccess
-                                      ? Colors.green
-                                      : Colors.red,
-                                  child: Icon(
-                                    isSuccess
-                                        ? Icons.check_circle
-                                        : Icons.error,
-                                    color: Colors.white,
-                                    size: 40,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  isSuccess
-                                      ? 'Recharge Successful'
-                                      : 'Recharge Failed',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: isSuccess
-                                        ? Colors.green
-                                        : Colors.red,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  message, // This will now correctly show the full message with LivetrnId
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
-                                    fontSize: 14,
-                                    color: Colors.black54,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(dialogContext).pop();
-                                    if (isSuccess) {
-                                      Navigator.of(context).pop();
-                                    }
-                                  },
-                                  child: const Text(
-                                    'OK',
-                                    style: TextStyle(
-                                        fontSize: 15,
-                                        color: Colors.blueAccent),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                    text: isLoading ? 'Please Wait...' : 'Proceed to Recharge',
-                  )                ],
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Confirm Recharge',
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
+          Container(
+            height: 250,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [_primaryColor, _secondaryColor],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
             ),
+          ),
+          SafeArea(
+            child: Column(
+              children: [
+                const SizedBox(height: 24),
+                _buildRechargeSummaryCard(operatorName, circle, operatorCode),
+                const Spacer(),
+                _buildRechargeButton(provider, operatorCode),
+                const SizedBox(height: 32),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRechargeSummaryCard(String operatorName, String circle, String operatorCode) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Recharge Details',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF333333),
+            ),
+          ),
+          const Divider(height: 30, color: Colors.grey),
+          _buildDetailRow('Mobile Number', widget.mobileNumber),
+          _buildDetailRow('Company', operatorName),
+          _buildDetailRow('State', circle),
+          _buildDetailRow('Plan', widget.plan.type),
+          _buildDetailRow('Validity', '${widget.plan.validity} days'),
+
+          const SizedBox(height: 16),
+          _buildAmountRow(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF555555)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAmountRow() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: _primaryColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'Recharge Amount',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF333333)),
+          ),
+          Text(
+            '₹${widget.plan.rs}',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _primaryColor),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRechargeButton(ProviderScreen provider, String operatorCode) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [_primaryColor, _secondaryColor],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(15.0),
+        ),
+        child: ElevatedButton(
+          onPressed: isLoading
+              ? null
+              : () async {
+            setState(() => isLoading = true);
+
+            final response = await provider.prepaidRecharge(
+              number: widget.mobileNumber,
+              amount: widget.plan.rs,
+              operator: operatorCode,
+            );
+
+            if (!mounted) return;
+            setState(() => isLoading = false);
+
+            final bool isSuccess = response['success'] ?? false;
+
+            if (isSuccess) {
+              final RechargeResponse rechargeData = response['data'];
+
+              context.go(
+                AppPages.rechargesuccessscreen,
+                extra: rechargeData,
+
+              );
+            } else {
+              final String message = response['message'] ?? 'Something went wrong';
+              _showErrorDialog(message);
+            }
+
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+          child: isLoading
+              ? const SizedBox(
+            height: 20,
+            width: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          )
+              : const Text(
+            'Confirm & Pay',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircleAvatar(
+                radius: 30,
+                backgroundColor: Colors.red,
+                child: Icon(Icons.error, color: Colors.white, size: 40),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Recharge Failed',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                message,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14, color: Colors.black54),
+                textAlign: TextAlign.center,
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text('OK', style: TextStyle(fontSize: 15, color: _secondaryColor)),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 }
+
+
+
+

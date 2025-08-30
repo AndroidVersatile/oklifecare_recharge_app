@@ -39,76 +39,35 @@ class CashBackShowModel {
 
 
 
-class RechargePlanModel {
-  final int rs;
+class RechargePlan {
+  final String type;
+  final String rs;
   final String desc;
-  final int? validity;
-  final String lastUpdate;
-  final double? data;
-  final double? talktime;
-  final String type; // Added to store the plan category
+  final String validity;
+  final String data;
+  final String? lastUpdate; // Add the new field, making it nullable
 
-  const RechargePlanModel({
+  RechargePlan({
+    required this.type,
     required this.rs,
     required this.desc,
-    this.validity,
-    required this.lastUpdate,
-    this.data,
-    this.talktime,
-    required this.type,
+    required this.validity,
+    required this.data,
+    this.lastUpdate, // Include it in the constructor
   });
 
-  factory RechargePlanModel.fromJson(Map<String, dynamic> json, String type) {
-    return RechargePlanModel(
-      rs: json["rs"] as int,
-      desc: json["desc"] as String,
-      validity: json["validity"] as int?,
-      lastUpdate: json["last_update"] as String,
-      data: (json["data"] as num?)?.toDouble(),
-      talktime: (json["talktime"] as num?)?.toDouble(),
-      type: type, // Pass the category as the type
+  factory RechargePlan.fromJson(Map<String, dynamic> json, String type) {
+    return RechargePlan(
+      type: type,
+      rs: json['rs'].toString(),
+      desc: json['desc'] ?? 'No description',
+      validity: json['validity'].toString(),
+      data: json['data']?.toString() ?? 'N/A',
+      lastUpdate: json['last_update']?.toString(), // Parse the last_update field
     );
   }
 }
 
-
-class RechargeResponse {
-  final int status;
-  final bool success;
-  final String message;
-  final List<RechargePlanModel> allPlans;
-
-  const RechargeResponse({
-    required this.status,
-    required this.success,
-    required this.message,
-    required this.allPlans,
-  });
-
-  factory RechargeResponse.fromJson(Map<String, dynamic> json) {
-    final Map<String, dynamic> plansData = json['data']['plans'];
-    final List<RechargePlanModel> plans = [];
-
-    // Loop through each category (e.g., 'Popular', 'Top Up')
-    plansData.forEach((category, planList) {
-      if (planList is List) {
-        // Loop through the list of plans in each category
-        for (var planJson in planList) {
-          if (planJson is Map<String, dynamic>) {
-            plans.add(RechargePlanModel.fromJson(planJson, category));
-          }
-        }
-      }
-    });
-
-    return RechargeResponse(
-      status: json['status'] as int,
-      success: json['success'] as bool,
-      message: json['message'] as String,
-      allPlans: plans,
-    );
-  }
-}
 
 class DepositDetailModel {
   int formNo;
@@ -605,64 +564,100 @@ class BalanceModel {
   }
 }
 class TransactionStatusModel {
-  String rechargeNo;
-  double amount;
-  String rechargeSts;
-  String trnId;
-  String opTrnId;
-  String liveTrnId;
-  DateTime tDate;
-  String operatorName;
-  String operatorDesc;
-  String operatorType;
+  final String? id;
+  final String rechargeNo;
+  final double amount;
+  final String rechargeSts;
+  final String trnId;
+  final String opTrnId;
+  final String liveTrnId;
+  final String operatorName;
+  final String operatorType;
+  final DateTime tDate;
 
   TransactionStatusModel({
+    required this.id,
     required this.rechargeNo,
     required this.amount,
     required this.rechargeSts,
     required this.trnId,
     required this.opTrnId,
     required this.liveTrnId,
-    required this.tDate,
     required this.operatorName,
-    required this.operatorDesc,
     required this.operatorType,
+    required this.tDate,
   });
 
   factory TransactionStatusModel.fromJson(Map<String, dynamic> json) {
     return TransactionStatusModel(
+      id: json['Id']?.toString(),
       rechargeNo: json['RechargeNo'] ?? '',
-      amount: (json['Amount'] ?? 0).toDouble(),
+      amount: (json['Amount'] as num?)?.toDouble() ?? 0.0,
       rechargeSts: json['RechargeSts'] ?? '',
       trnId: json['TrnId'] ?? '',
       opTrnId: json['OpTrnId'] ?? '',
       liveTrnId: json['LiveTrnId'] ?? '',
-      tDate: DateTime.fromMillisecondsSinceEpoch(
-        int.parse(json['TDate'].toString().replaceAll(RegExp(r'[^0-9]'), '')),
-      ),
       operatorName: json['OperatorName'] ?? '',
-      operatorDesc: json['OperatorDesc'] ?? '',
       operatorType: json['OperatorType'] ?? '',
+      tDate: json['TDate'] is DateTime
+          ? json['TDate']
+          : DateTime.now(), // fallback
     );
   }
+}
+class WalletTransactionModel {
+  final String? remark;
+  final double? credit;
+  final double? debit;
+  final DateTime tDate;
 
-  Map<String, dynamic> toJson() {
-    return {
-      'RechargeNo': rechargeNo,
-      'Amount': amount,
-      'RechargeSts': rechargeSts,
-      'TrnId': trnId,
-      'OpTrnId': opTrnId,
-      'LiveTrnId': liveTrnId,
-      'TDate': '/Date(${tDate.millisecondsSinceEpoch})/',
-      'OperatorName': operatorName,
-      'OperatorDesc': operatorDesc,
-      'OperatorType': operatorType,
-    };
+  WalletTransactionModel({
+    this.remark,
+    this.credit,
+    this.debit,
+    required this.tDate,
+  });
+
+  factory WalletTransactionModel.fromJson(Map<String, dynamic> json) {
+    return WalletTransactionModel(
+      remark: json['Remark'] as String?,
+      credit: (json['Credit'] as num?)?.toDouble(),
+      debit: (json['Debit'] as num?)?.toDouble(),
+      tDate: json['TDate'] is DateTime
+          ? json['TDate']
+          : DateTime.now(),
+    );
   }
 }
 
-// List parse helper
-List<TransactionStatusModel> transactionStatusListFromJson(List<dynamic> jsonList) {
-  return jsonList.map((e) => TransactionStatusModel.fromJson(e)).toList();
+class RechargeResponse {
+  final String transactionId;
+  final String amount;
+  final String operator;
+  final String status;
+  final String message;
+  final String liveTrnId;
+  final double cashback;
+
+  RechargeResponse({
+    required this.transactionId,
+    required this.amount,
+    required this.operator,
+    required this.status,
+    required this.message,
+    required this.liveTrnId,
+    required this.cashback,
+  });
+
+  factory RechargeResponse.fromJson(Map<String, dynamic> json) {
+    return RechargeResponse(
+      transactionId: json['transactionid'] ?? '',
+      amount: json['amount'] ?? '',
+      operator: json['operator'] ?? '',
+      status: json['status'] ?? '',
+      message: json['message'] ?? '',
+      liveTrnId: json['LivetrnId'] ?? '',
+      cashback: double.tryParse(json['CashBack']?.toString() ?? '0') ?? 0.0,
+    );
+  }
 }

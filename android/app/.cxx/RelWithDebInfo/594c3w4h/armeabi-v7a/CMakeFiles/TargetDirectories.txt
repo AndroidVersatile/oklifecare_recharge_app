@@ -1,0 +1,2 @@
+D:/oklifecare_rechargeapp/oklifecare_recharge_app/android/app/.cxx/RelWithDebInfo/594c3w4h/armeabi-v7a/CMakeFiles/edit_cache.dir
+D:/oklifecare_rechargeapp/oklifecare_recharge_app/android/app/.cxx/RelWithDebInfo/594c3w4h/armeabi-v7a/CMakeFiles/rebuild_cache.dir

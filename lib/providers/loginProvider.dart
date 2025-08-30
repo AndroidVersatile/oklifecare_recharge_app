@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
@@ -16,6 +17,7 @@ import '../models/wallet_statement_model.dart';
 import '../widgets/error_utils.dart';
 
 class ProviderScreen extends ChangeNotifier {
+  static const String _apiKey = '1877e9a140cb998f1c692adae4a1a76079a935fcc98d9ba44f';
   UserDetailModel? _userDetail;
   double currentWalletBalance = 0.0;
   BalanceModel? _walletBalance;
@@ -34,10 +36,7 @@ class ProviderScreen extends ChangeNotifier {
   // List<CircleModel> circleList = [];
   List<CircleModel> circleList = List.empty(growable: true);
   List<CashBackShowModel> cashBackShowModel = List.empty(growable: true);
-
-  List<RechargePlanModel> rechargePlanList = [];
   List<String> rechargeTabList = [];
-  List<RechargePlanModel> filteredRechargePlanList = [];
   List<SelectBankModel> selectBankModel = List.empty(growable: true);
   List<AddBankDetailshowDataModel> addBankDetailshowDataModel =
       List.empty(growable: true);
@@ -49,6 +48,12 @@ class ProviderScreen extends ChangeNotifier {
   String? get memberName => _memberName;
   String? _mobileNo;
   String? get mobileNo => _mobileNo;
+  Map<String, dynamic>? _operatorDetails;
+  List<RechargePlan> _rechargePlanList = [];
+  Map<String, dynamic>? get operatorDetails => _operatorDetails;
+  List<RechargePlan> get rechargePlanList => _rechargePlanList;
+  String _currentUserId = '';
+  String get currentUserId => _currentUserId;
   Future<Map<String, dynamic>> loginUser(String userId, String password) async {
     _isLoading = true;
     _errorMessage = null;
@@ -81,10 +86,9 @@ class ProviderScreen extends ChangeNotifier {
           await appCache.saveUserFormNo(userFormNo);
           String passFromApi = data['Data'][0]['Passw'].toString();
           await appCache.saveUserPass(passFromApi);
-
-          // FIX: MemberName को cache में save करें और provider variable को update करें
           _memberName = data['Data'][0]['MemberName'].toString();
-          await appCache.saveMemberName(_memberName!); // MemberName को cache में save करें
+          await appCache.saveMemberName(_memberName!);
+          await appCache.saveUserId(userId);
 
         } else {
           _errorMessage = data["Message"] ?? "Login failed";
@@ -297,28 +301,6 @@ class ProviderScreen extends ChangeNotifier {
       };
     }
   }
-
-  // Future<dynamic> getRechargeOperator(type) async {
-  //   _isLoading = true;
-  //   notifyListeners();
-  //
-  //   final response =
-  //   await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
-  //     'reqtype': 'opcode'
-  //     // 'OperatorType': type,
-  //   });
-  //   var data = json.decode(response.data);
-  //   if (response.statusCode == 200) {
-  //     operatorModel = await List.castFrom(data['Data'].map((e) {
-  //       return OperatorModel.fromJson(e);
-  //     }).toList());
-  //     print(operatorModel);
-  //   }
-  //   _isLoading = false;
-  //   notifyListeners();
-  //   return data;
-  // }
-
   Future<dynamic> getMobileCircle() async {
     _isLoading = true;
     notifyListeners();
@@ -330,8 +312,6 @@ class ProviderScreen extends ChangeNotifier {
 
       print('API Response Status: ${response.statusCode}');
       print('API Response Data: ${response.data}');
-
-      // Change the condition to check for the 'success' key
       if (response.statusCode == 200 && response.data['success'] == true) {
         var data = response.data['data'];
         circleList = List<CircleModel>.from(data.map((e) {
@@ -356,17 +336,15 @@ class ProviderScreen extends ChangeNotifier {
     required String number,
     required String amount,
     required String operator,
-
   }) async {
     try {
-      // Check if the user is logged in
       final appCache = AppCache();
       String? formNo = await appCache.getUserFormNo();
+
       if (formNo == null) {
         return {'success': false, 'message': 'User not logged in.'};
       }
 
-      // Prepare the request body
       var requestBody = {
         'formno': formNo,
         'services': "P",
@@ -375,34 +353,42 @@ class ProviderScreen extends ChangeNotifier {
         'opcode': operator,
       };
 
-      // Make the API call
+      print("📤 API Request => ${ApiUrls.baseUrl}?reqtype=recharge");
+      print("📦 Request Body => $requestBody");
+
       final response = await _apiClient.dio.post(
         ApiUrls.baseUrl,
         queryParameters: {'reqtype': 'recharge'},
         data: requestBody,
       );
+      print("📥 API Response => ${response.data}");
 
-      // Explicitly decode the response to ensure it's a Map
       final responseData = json.decode(response.data.toString());
 
-      // Check for success based on API's response
-      if (responseData['Status'] == 'True' && responseData['Data'] is List && responseData['Data'].isNotEmpty) {
+      if (responseData['Status'] == 'True' &&
+          responseData['Data'] is List &&
+          responseData['Data'].isNotEmpty) {
         final nestedData = responseData['Data'].first;
+
         if (nestedData['status'] == 'SUCCESS') {
-          // final message = nestedData['message'] ?? 'Recharge successful!';
-          final liveTrnId = nestedData['LivetrnId'] ?? '';
-          final fullMessage = 'Recharge Successful\nLive Transaction ID: $liveTrnId';
-          return {'success': true, 'message': fullMessage};
+          final rechargeResponse = RechargeResponse.fromJson(nestedData);
+          return {
+            'success': true,
+            'data': rechargeResponse,
+          };
         }
       }
 
-      // Default failure for any other case
-      final errorMessage = responseData['Message'] ?? 'Recharge failed. Please try again.';
+      final errorMessage =
+          responseData['Message'] ?? 'Recharge failed. Please try again.';
       return {'success': false, 'message': errorMessage};
-    } catch (e) {
+    } catch (e, stack) {
+      print("❌ Exception => $e");
+      print("🛠 StackTrace => $stack");
       return {'success': false, 'message': 'An unexpected error occurred.'};
     }
   }
+
 
   Future<Map<String, dynamic>> dthRecharge({
     required String number,
@@ -429,22 +415,15 @@ class ProviderScreen extends ChangeNotifier {
         queryParameters: {'reqtype': 'recharge'},
         data: requestBody,
       );
-
-      // Explicitly decode the response to ensure it's a Map
       final responseData = json.decode(response.data.toString());
-
-      // Check for success based on API's response
       if (responseData['Status'] == 'True' && responseData['Data'] is List && responseData['Data'].isNotEmpty) {
         final nestedData = responseData['Data'].first;
         if (nestedData['status'] == 'SUCCESS') {
-          // final message = nestedData['message'] ?? 'Recharge successful!';
           final liveTrnId = nestedData['LivetrnId'] ?? '';
           final fullMessage = 'Recharge Successful\nLive Transaction ID: $liveTrnId';
           return {'success': true, 'message': fullMessage};
         }
       }
-
-      // Default failure for any other case
       final errorMessage = responseData['Message'] ?? 'Recharge failed. Please try again.';
       return {'success': false, 'message': errorMessage};
     } catch (e) {
@@ -475,99 +454,143 @@ class ProviderScreen extends ChangeNotifier {
     }
   }
 
-  Future<dynamic> getRechargePlan({
-    required String number,
-    required String operatorId,
-    required String stateId,
-  }) async {
-    _isLoading = true;
+
+  Future<void> getOperatorDetails(String mobileNumber) async {
+    _operatorDetails = null;
+    _rechargePlanList = [];
     notifyListeners();
 
+    const String url = 'https://verifyapi.in/api/verifyOperatorDetail';
+    final Map<String, String> headers = {
+      'api-key': _apiKey,
+      'Content-Type': 'application/json',
+    };
+    final Map<String, String> body = {
+      "serviceNumber": mobileNumber,
+    };
+
     try {
-      final response = await _apiClient.post(
-        'https://verifyapi.in/api/verifyBrowsePlan',
-        data: {
-          "operator_id": int.parse(operatorId),
-          "state_id": int.parse(stateId),
-          "mobile_number": number,
-        },
-        options: Options(
-          headers: {
-            'api-key': '1877e9a140cb998f1c692adae4a1a76079a935fcc98d9ba44f',
-            'Content-Type': 'application/json',
-          },
-        ),
+      print('Calling Operator API: $url');
+      print('Request Headers: $headers');
+      print('Request Body: ${json.encode(body)}');
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: headers,
+        body: json.encode(body),
       );
-      print('API Response: ${response.data}');
 
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        // Parse the entire response with the new model
-        final rechargeResponse = RechargeResponse.fromJson(response.data);
+      print('Operator API Response Status Code: ${response.statusCode}');
+      print('Operator API Response Body: ${response.body}');
 
-        // Populate the main plan list and tab list
-        rechargePlanList = rechargeResponse.allPlans;
-        rechargeTabList = rechargePlanList.map((plan) => plan.type).toSet().toList();
-
-        // Filter the list for the first tab
-        if (rechargeTabList.isNotEmpty) {
-          filterRechargePlanList(rechargeTabList.first);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        if (responseData['success'] == true && responseData['data'] != null) {
+          _operatorDetails = {
+            'operatorId': responseData['data']['operatorId'],
+            'operatorName': responseData['data']['operatorName'],
+            'stateId': responseData['data']['stateId'],
+            'stateName': responseData['data']['stateName'],
+          };
+          print('Successfully fetched operator details: $_operatorDetails');
+          notifyListeners();
         } else {
-          filteredRechargePlanList = [];
+          print('Operator API call succeeded but returned an error or no data: ${responseData['message']}');
+          _operatorDetails = null;
+          _rechargePlanList = [];
+          notifyListeners();
         }
-
+      } else {
+        print('Operator API call failed with status code: ${response.statusCode}');
+        _operatorDetails = null;
+        _rechargePlanList = [];
         notifyListeners();
-        return response.data;
-      }
-    } on DioError catch (e) {
-      if (e.response != null) {
-        return e.response!.data;
       }
     } catch (e) {
-      print('Error fetching recharge plans: $e');
-    } finally {
-      _isLoading = false;
+      if (kDebugMode) {
+        print('Error fetching operator details: $e');
+      }
+      _operatorDetails = null;
+      _rechargePlanList = [];
       notifyListeners();
     }
-    return null;
   }
 
-  void filterRechargePlanList(String tab) {
-    // Filter the main list to show plans for the selected tab
-    filteredRechargePlanList = rechargePlanList.where((plan) => plan.type == tab).toList();
+  Future<void> getRechargePlans(String mobileNumber) async {
+    if (_operatorDetails == null) {
+      print('Cannot fetch plans: operator details are null.');
+      return;
+    }
+
+    _rechargePlanList = [];
+    notifyListeners();
+
+    const String url = 'https://verifyapi.in/api/verifyBrowsePlan';
+    final Map<String, String> headers = {
+      'api-key': _apiKey,
+      'Content-Type': 'application/json',
+    };
+    final Map<String, dynamic> body = {
+      "operator_id": _operatorDetails!['operatorId'],
+      "state_id": _operatorDetails!['stateId'],
+      "mobile_number": mobileNumber,
+    };
+
+    try {
+      print('Calling Plans API: $url');
+      print('Request Headers: $headers');
+      print('Request Body: ${json.encode(body)}');
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: headers,
+        body: json.encode(body),
+      );
+
+      print('Plans API Response Status Code: ${response.statusCode}');
+      print('Plans API Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        if (responseData['success'] == true && responseData['data'] != null) {
+          final Map<String, dynamic> plansData = responseData['data']['plans'];
+          final List<RechargePlan> plans = [];
+          plansData.forEach((type, planList) {
+            if (planList is List) {
+              for (var plan in planList) {
+                plans.add(RechargePlan.fromJson(plan, type));
+              }
+            }
+          });
+          _rechargePlanList = plans;
+          print('Successfully fetched ${plans.length} recharge plans.');
+          notifyListeners();
+        } else {
+          print('Plans API call succeeded but returned an error or no data: ${responseData['message']}');
+          _rechargePlanList = [];
+          notifyListeners();
+        }
+      } else {
+        print('Plans API call failed with status code: ${response.statusCode}');
+        _rechargePlanList = [];
+        notifyListeners();
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching recharge plans: $e');
+      }
+      _rechargePlanList = [];
+      notifyListeners();
+    }
+  }
+
+  void clearPlansAndOperator() {
+    _operatorDetails = null;
+    _rechargePlanList = [];
     notifyListeners();
   }
 
   List<CashbackModel> cashback = List.empty(growable: true);
-  //
-  // Future<dynamic> getCashbackDetails({
-  //   required String serviceId,
-  //   required String operatorId,
-  //   required String amount,
-  // }) async {
-  //   _isLoading = true;
-  //   notifyListeners();
-  //   var formno = await cache.getUserFormNo();
-  //   final response =
-  //       await _apiClient.dio.get(ApiUrls.baseUrl, queryParameters: {
-  //     'ReqType': 'CommissionCashback',
-  //     'RetailerFormno': formno,
-  //     'ServiceID': base64.encode(utf8.encode(serviceId)),
-  //     'OperatorID': base64.encode(utf8.encode(operatorId)),
-  //     'amount': base64.encode(utf8.encode(amount)),
-  //   });
-  //   var data = json.decode(response.data);
-  //   if (response.statusCode == 200) {
-  //     cashback = await List.castFrom(data['Data'].map((e) {
-  //       return CashbackModel.fromJson(e);
-  //     }).toList());
-  //   }
-  //   print(cashback);
-  //   _isLoading = false;
-  //   notifyListeners();
-  //   return data;
-  // }
-
-
 
   Future<dynamic> fetchBankName() async {
     _isLoading = true;

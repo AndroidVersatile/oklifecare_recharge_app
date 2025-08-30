@@ -61,7 +61,7 @@ class _AppRoutingState extends State<AppRouting> {
         return MultiProviderInitialise(
           child: MaterialApp.router(
             scaffoldMessengerKey: rootScaffoldMessengerKey,
-            title: 'UONLY',
+            title: 'Ok Life Care',
             themeMode: ThemeMode.light,
             debugShowCheckedModeBanner: false,
             routeInformationProvider: router?.routeInformationProvider,

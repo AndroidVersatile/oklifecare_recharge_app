@@ -1,0 +1,2 @@
+D:/oklifecare_rechargeapp/oklifecare_recharge_app/android/app/.cxx/Debug/4b342u3c/x86_64/CMakeFiles/edit_cache.dir
+D:/oklifecare_rechargeapp/oklifecare_recharge_app/android/app/.cxx/Debug/4b342u3c/x86_64/CMakeFiles/rebuild_cache.dir
